@@ -308,7 +308,7 @@ elif args.sensor:
   target_value = n * T_b + b
   
   def dark_pix(i):
-   ''' Calculates output voltage of dark pixel 
+    ''' Calculates output voltage of dark pixel 
         (without IR power impinged) 
         at given bias current and sensor temperature''' 
     global V_dark, I, R0d, Ea, k, T_s, gi, tau_i, itime

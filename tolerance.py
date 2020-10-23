@@ -15,10 +15,6 @@ Ea = sp.Ea
 pix_v = sp.pix_v
 pix_h = sp.pix_h
 
-R_tol_d = 0.0005
-g_tol_d = 0.0005
-c_tol_d = 0.0005
-
 parser = argparse.ArgumentParser(
     description='''
     Generate 480x640 arrays for physical parameters of MBA:
@@ -59,7 +55,7 @@ c_scale = ci*args.c_tol   # Default standard deviation for "c" values
 
 def generate_arrays(R_tol, g_tol, c_tol):
   global R_tai, gi, ci, pix_v, pix_h
-  print("Koeficients used:")
+  print("Coefficients used:")
   print("R_tol: ", R_tol)
   print("g_tol: ", g_tol)
   print("c_tol: ", c_tol)
