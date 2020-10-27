@@ -20,7 +20,7 @@ parser =  argparse.ArgumentParser(
 # Adding the arguments
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-b', '--blackbody', nargs=4, type=float, help="Output @ different blackbody temperatures and constant sensor temperature. Insert start temperature, end temperature of blackbody, temperature increase step and sensor temperature")
-group.add_argument('-s', '--sensor', nargs=4, type=float, help="Output @ different sensor temperatures and constant blackbody temperature. Insert start temperature, end temperature of sensor, temperature increase step and temperature of blacМарсианин123!kbody")
+group.add_argument('-s', '--sensor', nargs=4, type=float, help="Output @ different sensor temperatures and constant blackbody temperature. Insert start temperature, end temperature of sensor, temperature increase step and temperature of blackbody")
 
 args = parser.parse_args()
 
@@ -251,7 +251,7 @@ elif args.sensor:
   T_b = args.sensor[3]
   
   # Run "blackbody.py" script in Linux Terminal
-  command = 'python3 blackbody.py ' + str(T_b) + ' ' + str(T_b) + ' ' + '1' + ' -d -s'
+  command = 'python3 blackbody.py ' + str(T_b) + ' ' + str(T_b) + ' ' + '1' + ' -d'
   print('Calling script:')
   print(command, '\n')
   os.system(command)
