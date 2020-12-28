@@ -7,7 +7,7 @@ import sys_param as sp
 import matplotlib.pyplot as plt
 import argparse
 import os
-```
+
 
 # Initializing argparse
 parser = argparse.ArgumentParser(
@@ -19,7 +19,8 @@ parser = argparse.ArgumentParser(
     
 #Adding the arguments
 group = parser.add_mutually_exclusive_group()
-group.add_argument('-d', '--distribution', action="store_true", help='Calculate Pa(T) @ each T and save the results to .txt files')
+group.add_argument('-d', '--distribution', action="store_true", 
+                   help='Calculate Pa(T) @ each T and save the results to .txt files')
 group.add_argument('-g', '--graph', action="store_true",
                    help='Calculate and plot P(T). Default option. Explain!', default=1)
 parser.add_argument('T_start', type=float, help="Initial temperature of blackbody", default=300)
@@ -32,8 +33,13 @@ if len(sys.argv) == 1:
   parser.print_help(sys.stderr)
   sys.exit(1)
 args = parser.parse_args()
+```
+Importing all necessary and initializing argparse
+
+----
 
 
+```python
 def names():
   # Names for output files and directories
   global fdir, pattern1, pattern2, pattern3, pattern4, fname1, fname2
@@ -44,8 +50,12 @@ def names():
   pattern4 = str(args.T_start) + '_' + str(args.T_stop) + '_' + str(args.T_step) + '.txt'
   fname1 = fdir + '/' + pattern1 + pattern3 + pattern4
   fname2 = fdir + '/' + pattern2 + pattern3 + pattern4
+```
+String used for names of output files and directories
 
+----
 
+```python
 def collect_data():
   # System parameters defined in "sys_param.py"
   global Omega, Ar, A_pix, A_sens
@@ -66,19 +76,37 @@ def collect_data():
   fl = sp.fl
   lambd1 = sp.lambd1
   lambd2 = sp.lambd2
+```
+Collecting data from "sys_param(.py)" module. 
+For detailed information see "sys_param_explonation.md"
 
+----
 
+Performing in-band integration of Planck radiation function, 
+using method described in sources:
+> 1. "Inegration of Planck blackbody radiation function." W.K.Widger, M.P. Woodall
+
+> 2. "Blackbody Radiation Function." S.L. Chang, K.T. Rhee
+
+ - Defining list of blackbody temperatures and iterative row:
+```python
 def integration():
   # Array of blackboby temperatures
   global T, temper_it, L, it
   T = np.arange(args.T_start, args.T_stop+args.T_step, args.T_step)
   temper_it = np.arange(T.size)
+```
 
+ - Defining empty array to store calculation results and iterative row length:
+```python
   # Empty array for radiance integral results
   L = np.zeros(T.size)
   # Number of terms in the intergation row
   it = np.arange(1, 101, 1)
+```
 
+ - Performing calculations: 
+```python
   ''' Integration of Planks radiation function
       in wave length of interest band
       "BLACKBODY RADIATION FUNCTION" Chang, Rhee 1984'''
@@ -89,12 +117,16 @@ def integration():
       B1 = (2 * k**4 * T[t]**4)/(h**3 * c**2) * exp(-n*x1) * (x1**3 / n + (3 * x1**2)/n**2 + (6 * x1)/n**3 + 6/n**4)
       B2 = (2 * k**4 * T[t]**4)/(h**3 * c**2) * exp(-n*x2) * (x2**3 / n + (3 * x2**2)/n**2 + (6 * x2)/n**3 + 6/n**4)
       L[t] += (B2-B1)
+```
 
+ - Calculating IR power that impignes on one pixel sensetive area, if it is located in the center of sensor
+```python
   global P
   ''' Calculating IR power that impignes on
       one pixel sensetive area, if it is 
       located in the center of sensor'''
   P = L*np.cos(Phi_s)*A_sens*np.cos(Phi_r)*Omega
+```
 
 
 # Argument "--distribution"
