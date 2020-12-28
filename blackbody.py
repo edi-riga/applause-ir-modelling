@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from numpy import exp
 from scipy.constants import c, h, k, pi
@@ -17,68 +18,87 @@ parser = argparse.ArgumentParser(
 #Adding the arguments
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-d', '--distribution', action="store_true", help='Calculate Pa(T) @ each T and save the results to .txt files')
-group.add_argument('-g', '--graph', action="store_true", help='Calculate and plot P(T). Default option', default=1)
+group.add_argument('-g', '--graph', action="store_true",
+                   help='Calculate and plot P(T). Default option. Explain!', default=1)
 parser.add_argument('T_start', type=float, help="Initial temperature of blackbody", default=300)
 parser.add_argument('T_stop',  type=float, help="End temperature of blackbody")
 parser.add_argument('T_step',  type=float, help="Step of temperature increase")
+parser.add_argument('-r', '--run', action="store_true",
+                    help='Used only if "blackbody.py" have been called from "frame_gen.py"', default=0 )
 
+if len(sys.argv) == 1:
+  parser.print_help(sys.stderr)
+  sys.exit(1)
 args = parser.parse_args()
 
-# Names for output files and directories
-fdir = 'data_files'
-pattern1 = 'pto1pix'
-pattern2 = 'distribution'
-pattern3 = '_BB_TempRange_'
-pattern4 = str(args.T_start) + '_' + str(args.T_stop) + '_' + str(args.T_step) + '.txt'
-fname1 = fdir + '/' + pattern1 + pattern3 + pattern4
-fname2 = fdir + '/' + pattern2 + pattern3 + pattern4
 
-# System parameters defined in "sys_param.py"
-Omega = sp.Omega
-Ar = sp.Ar
-A_pix = sp.A_pix
-A_sens = sp.A_sens
+def names():
+  # Names for output files and directories
+  global fdir, pattern1, pattern2, pattern3, pattern4, fname1, fname2
+  fdir = 'data_files'
+  pattern1 = 'pto1pix'
+  pattern2 = 'distribution'
+  pattern3 = '_BB_TempRange_'
+  pattern4 = str(args.T_start) + '_' + str(args.T_stop) + '_' + str(args.T_step) + '.txt'
+  fname1 = fdir + '/' + pattern1 + pattern3 + pattern4
+  fname2 = fdir + '/' + pattern2 + pattern3 + pattern4
 
-Phi_r = sp.Phi_r
-Phi_s = sp.Phi_r
-tau = sp.tau
 
-pix_h = sp.pix_h
-pix_v = sp.pix_v
-pitch = sp.pitch
-fl = sp.fl
+def collect_data():
+  # System parameters defined in "sys_param.py"
+  global Omega, Ar, A_pix, A_sens
+  Omega = sp.Omega
+  Ar = sp.Ar
+  A_pix = sp.A_pix
+  A_sens = sp.A_sens
 
-lambd1 = sp.lambd1
-lambd2 = sp.lambd2
+  global Phi_r, Phi_s, tau
+  Phi_r = sp.Phi_r
+  Phi_s = sp.Phi_r
+  tau = sp.tau
 
-# Array of blackboby temperatures
-T = np.arange(args.T_start, args.T_stop+args.T_step, args.T_step)
-temper_it = np.arange(0, T.size, 1)
+  global pix_h, pix_v, pitch, fl, lambd1, lambd2
+  pix_h = sp.pix_h
+  pix_v = sp.pix_v
+  pitch = sp.pitch
+  fl = sp.fl
+  lambd1 = sp.lambd1
+  lambd2 = sp.lambd2
 
-# Empty array for radiance integral results
-L = np.zeros(T.size)
-# Number of terms in the intergation row
-it = np.arange(1, 101, 1)
 
-''' Integration of Planks radiation function
-    in wave length of interest band'''
-for t in temper_it:
-  x1 = (h*c)/(k*T[t]*lambd1)
-  x2 = (h*c)/(k*T[t]*lambd2)
-  for n in it:
-    B1 = (2 * k**4 * T[t]**4)/(h**3 * c**2) * exp(-n*x1) * (x1**3 / n + (3 * x1**2)/n**2 + (6 * x1)/n**3 + 6/n**4)
-    B2 = (2 * k**4 * T[t]**4)/(h**3 * c**2) * exp(-n*x2) * (x2**3 / n + (3 * x2**2)/n**2 + (6 * x2)/n**3 + 6/n**4)
-    L[t] += (B2-B1)
+def integration():
+  # Array of blackboby temperatures
+  global T, temper_it, L, it
+  T = np.arange(args.T_start, args.T_stop+args.T_step, args.T_step)
+  temper_it = np.arange(T.size)
 
-''' Calculating IR power that impignes on
-    one pixel sensetive area, if it is 
-    located in the center of sensor'''
-P = L*np.cos(Phi_s)*A_sens*np.cos(Phi_r)*Omega
+  # Empty array for radiance integral results
+  L = np.zeros(T.size)
+  # Number of terms in the intergation row
+  it = np.arange(1, 101, 1)
+
+  ''' Integration of Planks radiation function
+      in wave length of interest band
+      "BLACKBODY RADIATION FUNCTION" Chang, Rhee 1984'''
+  for t in temper_it:
+    x1 = (h*c)/(k*T[t]*lambd1)
+    x2 = (h*c)/(k*T[t]*lambd2)
+    for n in it:
+      B1 = (2 * k**4 * T[t]**4)/(h**3 * c**2) * exp(-n*x1) * (x1**3 / n + (3 * x1**2)/n**2 + (6 * x1)/n**3 + 6/n**4)
+      B2 = (2 * k**4 * T[t]**4)/(h**3 * c**2) * exp(-n*x2) * (x2**3 / n + (3 * x2**2)/n**2 + (6 * x2)/n**3 + 6/n**4)
+      L[t] += (B2-B1)
+
+  global P
+  ''' Calculating IR power that impignes on
+      one pixel sensetive area, if it is 
+      located in the center of sensor'''
+  P = L*np.cos(Phi_s)*A_sens*np.cos(Phi_r)*Omega
+
 
 # Argument "--distribution"
 # Define function of IR power distribution over sensor area.
 def power_distribution_over_sens_area():
-  global pix_h, pix_v, pitch, fl, pow_distrib, P
+  global fl, pow_distrib, P
   
   # Define array for saving distribution 
   # factor results for each pixel
@@ -128,46 +148,58 @@ def power_distribution_over_sens_area():
 
 # Argument "--graph"
 def plot_result():
-  global P, T
   plt.plot(T, P, 'bx')
   plt.xlabel('Black body temperature [K]')
-  plt.ylabel('IR power [W]')
+  plt.ylabel('IR power [W], impigned on one pixel sensitive area, \n located in the middle of the sensor')
   plt.grid(True)
   plt.show()
 
+
 def save_data():
-  global fdir, fname1, fname2, P, pow_distrib
-  try:
-    os.mkdir(fdir)
-  except OSError:
-    print('\nDirectory "%s" already exist\n' % fdir)
+  if args.run:
+    np.savetxt('buf_of_powers.txt', P)
+
+    with open('buf_of_data.txt','w') as outfile:
+      for data in pow_distrib:
+        np.savetxt(outfile, data)
+    print("Done.\n")
   else:
-    print('\nSuccessfully created the directory "%s" \n' % fdir)
-  
-  print("\nSaving data")
-  # Saving IR power values impigned on one pixel
-  np.savetxt(fname1, P)
-  
-  # Saving IR distribution over sensor area
-  with open(fname2, 'w') as outfile:
-    for data in pow_distrib:
-      np.savetxt(outfile, data)
-  print("Done.\n")
+    #global fdir, fname1, fname2, P, pow_distrib
+    try:
+      os.mkdir(fdir)
+    except OSError:
+      print('\nDirectory "%s" already exist\n' % fdir)
+    else:
+      print('\nSuccessfully created the directory "%s" \n' % fdir)
+
+    print("\nSaving data")
+    # Saving IR power values impigned on one pixel
+    np.savetxt(fname1, P)
+
+    # Saving IR distribution over sensor area
+    with open(fname2, 'w') as outfile:
+      for data in pow_distrib:
+        np.savetxt(outfile, data)
+    print("Done.\n")
 
 
-if args.distribution:
-  # Argument "--distribution"
-  print("Blackbody temperature is continiously growing")
-  print("from {} K to {} K with {} K step".format(args.T_start, args.T_stop, args.T_step))
-  print("\nCalculating the distribution of IR power")
-  print("over sensor area @ blackbody temperatures:")
-  print(T)
-  power_distribution_over_sens_area()
-  save_data()
+if __name__ == '__main__':
+  names()
+  collect_data()
+  integration()
+  if args.distribution:
+    # Argument "--distribution"
+    print("Blackbody temperature is continiously growing")
+    print("from {} K to {} K with {} K step".format(args.T_start, args.T_stop, args.T_step))
+    print("\nCalculating the distribution of IR power")
+    print("over sensor area @ blackbody temperatures:")
+    print(T)
+    power_distribution_over_sens_area()
+    save_data()
     
-elif args.graph:
-  # Argument "--graph"
-  plot_result()
-  print("The grafical results will be showed")
+  elif args.graph:
+    # Argument "--graph"
+    plot_result()
+    print("The grafical results will be showed")
 
 
