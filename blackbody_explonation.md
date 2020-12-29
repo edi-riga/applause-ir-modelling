@@ -1,3 +1,5 @@
+#### Importing all necessary and initializing argparse
+
 ```python
 import sys
 import numpy as np
@@ -34,10 +36,10 @@ if len(sys.argv) == 1:
   sys.exit(1)
 args = parser.parse_args()
 ```
-Importing all necessary and initializing argparse
 
 ----
 
+#### String used for names of output files and directories
 
 ```python
 def names():
@@ -51,10 +53,11 @@ def names():
   fname1 = fdir + '/' + pattern1 + pattern3 + pattern4
   fname2 = fdir + '/' + pattern2 + pattern3 + pattern4
 ```
-String used for names of output files and directories
 
 ----
 
+#### Collecting data from "sys_param(.py)" module. 
+For detailed information see "sys_param_explonation.md"
 ```python
 def collect_data():
   # System parameters defined in "sys_param.py"
@@ -77,13 +80,11 @@ def collect_data():
   lambd1 = sp.lambd1
   lambd2 = sp.lambd2
 ```
-Collecting data from "sys_param(.py)" module. 
-For detailed information see "sys_param_explonation.md"
+
 
 ----
 
-Performing in-band integration of Planck radiation function, 
-using method described in sources:
+#### Performing in-band wavelength range integration of Planck radiation function, using method described in sources:
 > 1. "Inegration of Planck blackbody radiation function." W.K.Widger, M.P. Woodall
 
 > 2. "Blackbody Radiation Function." S.L. Chang, K.T. Rhee
@@ -156,12 +157,13 @@ Below is Python realisation of the in-band integration described:
       L[t] += (B2-B1)
 ```
 
- - Calculating IR power that impignes on one pixel sensetive area, if it is located in the center of sensor.
- - We use previously calculated value of in-band wavelength range integral of blackbody radiance at given temperatures.
- - Lambert's cosine law is represented by angles ```Phi_s``` and ```Phi_r```
- - Projected solid angle - ```Omega```
- - Sensetive area of the pixel - ```A_sens```
- - More detailed description can be found in "sys_param_explonation.md"
+#### Calculating IR power that impignes on one pixel sensetive area, if it is located in the center of sensor.
+  - We use previously calculated value of in-band wavelength range integral of blackbody radiance at given temperatures.
+  - Lambert's cosine law is represented by angles ```Phi_s``` and ```Phi_r```
+  - Projected solid angle - ```Omega```
+  - Sensetive area of the pixel - ```A_sens```
+  
+More detailed description can be found in "sys_param_explonation.md"
 ```python
   global P
   ''' Calculating IR power that impignes on
@@ -169,6 +171,19 @@ Below is Python realisation of the in-band integration described:
       located in the center of sensor'''
   P = L*np.cos(Phi_s)*A_sens*np.cos(Phi_r)*Omega
 ```
+
+----
+
+#### Calculation of IR power distribution over sensor area
+
+![](Img/Cosine_to_four_law.PNG)
+
+First the "cosine to four" factor is calculated for each pixel.
+As we know the pitch between pixels and focal length, we can calculate the distance from 
+exit pupil center to the center of each pixel, and cosinus of angle to focal length.
+
+![](Img/cos4_factor_visualisation.PNG)
+
 
 ```python
 # Argument "--distribution"
@@ -213,15 +228,31 @@ def power_distribution_over_sens_area():
   # Define array for savin power distribution
   # calculated values
   pow_distrib = np.ones((P.size, pix_v, pix_h))
-  
+```
+
+When the distribution factor is known, the array of distribution factor is multiplied 
+by IR power impigned on sensetive area of one pixel if it is located in the center of sensor.
+The resulting array introduce IR power distribution over sensor area.
+
+```python
   # Calculating power IR power distribution over sensor area
   for p in pow_ar:
     for r in row_pd:
         for co in col_pd:
             pow_distrib[p][r][co] = distrib_fact[r][co]*P[p]
   return pow_distrib
+```
+Here is a visualisation of IR power distribution over sensor area at different
+blackbody temperatures:
 
+![](Img/IR_pow_visualisation.PNG)
 
+----
+
+#### Plot of caluculated IR powers to one pixel depending on blackbody temperature
+May be useful visualization, if physical parameters of sensor are changed. 
+
+```python
 # Argument "--graph"
 def plot_result():
   plt.plot(T, P, 'bx')
@@ -229,8 +260,16 @@ def plot_result():
   plt.ylabel('IR power [W], impigned on one pixel sensitive area, \n located in the middle of the sensor')
   plt.grid(True)
   plt.show()
+```
+Example of plot:
 
+![](Img/IRpow_T__plot.png)
 
+----
+
+#### Function for saving numpy 3D array to .txt file
+
+```python
 def save_data():
   if args.run:
     np.savetxt('buf_of_powers.txt', P)
@@ -257,8 +296,11 @@ def save_data():
       for data in pow_distrib:
         np.savetxt(outfile, data)
     print("Done.\n")
+```
 
+#### Calling script
 
+```python
 if __name__ == '__main__':
   names()
   collect_data()
