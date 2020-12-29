@@ -105,7 +105,44 @@ def integration():
   it = np.arange(1, 101, 1)
 ```
 
- - Performing calculations: 
+ - Integration: 
+
+If we use Planck's law expression with wavelength:
+
+![](Img/Planck_law_wavelength.PNG)
+
+and Stefan-Boltzmann constant expression:
+
+![](Img/Stefan_Boltzmann.PNG)
+
+We can transform the expression:
+
+![](Img/Expression.PNG)
+> "Blackbody Radiation Function." S.L. Chang, K.T. Rhee
+
+to wiew:
+
+![](Img/Expression1.PNG)
+
+where:
+
+![](Img/Variables.PNG)
+
+Finnaly, the expression for in-band wavelength range integral of blackbody radiance is:
+
+![](Img/In_band_integral.PNG)
+
+where:
+
+![](Img/Variables1.PNG)
+
+We can transform constant before integral to simplier view:
+
+![](Img/Constant_before_integral.PNG)
+
+The tolerance of result depends on count of summing row members - "n".
+Below is Python realisation of the in-band integration described: 
+
 ```python
   ''' Integration of Planks radiation function
       in wave length of interest band
@@ -119,7 +156,12 @@ def integration():
       L[t] += (B2-B1)
 ```
 
- - Calculating IR power that impignes on one pixel sensetive area, if it is located in the center of sensor
+ - Calculating IR power that impignes on one pixel sensetive area, if it is located in the center of sensor.
+ - We use previously calculated value of in-band wavelength range integral of blackbody radiance at given temperatures.
+ - Lambert's cosine law is represented by angles ```Phi_s``` and ```Phi_r```
+ - Projected solid angle - ```Omega```
+ - Sensetive area of the pixel - ```A_sens```
+ - More detailed description can be found in "sys_param_explonation.md"
 ```python
   global P
   ''' Calculating IR power that impignes on
@@ -128,7 +170,7 @@ def integration():
   P = L*np.cos(Phi_s)*A_sens*np.cos(Phi_r)*Omega
 ```
 
-
+```python
 # Argument "--distribution"
 # Define function of IR power distribution over sensor area.
 def power_distribution_over_sens_area():
@@ -235,3 +277,4 @@ if __name__ == '__main__':
     # Argument "--graph"
     plot_result()
     print("The grafical results will be showed")
+```
