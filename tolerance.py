@@ -4,20 +4,9 @@ from scipy.constants import k
 import argparse
 import os
 
-# System parameters defined in "sys_param.py"
-T_s = sp.T_sa
-R_tai = sp.R_ta_i
-gi = sp.g_ini
-ci = sp.c_ini
-alpha = sp.alpha
-
-Ea = sp.Ea
-pix_v = sp.pix_v
-pix_h = sp.pix_h
-
 parser = argparse.ArgumentParser(
     description='''
-    Generate 480x640 arrays for physical parameters of MBA:
+    Generate 486x646 arrays for physical parameters of MBA:
     "g" - thermal conductivity
     "c" - thermal capacity
     "tau" - thermal time constant
@@ -40,33 +29,53 @@ parser.add_argument('c_tol', type=float,
 
 args = parser.parse_args()
 
-fdir = 'tolerance_data'
-try:
-  os.mkdir(fdir)
-except OSError:
-  print('\nDirectory "%s" already exist\n' % fdir)
-else:
-  print('\nSuccessfully created the directory "%s" \n' % fdir)
+def collect_data():
+  # System parameters defined in "sys_param.py"
+  global T_s, R_tai, gi, ci, alpha
+  T_s = sp.T_sa
+  R_tai = sp.R_ta_i
+  gi = sp.g_ini
+  ci = sp.c_ini
+  alpha = sp.alpha
+  global Ea, pix_v, pix_h, pix_v_all, pix_h_all
+  Ea = sp.Ea
+  pix_v = sp.pix_v
+  pix_h = sp.pix_h
+  pix_v_all = sp.pix_v_all
+  pix_h_all = sp.pix_h_all
 
-R_scale = R_tai*args.R_tol # Default stardard deviation for "R_ta" values
-g_scale = gi*args.g_tol   # Default standard deviation for "g" values
-c_scale = ci*args.c_tol   # Default standard deviation for "c" values
+
+def make_dir():
+  global fdir
+  fdir = 'tolerance_data'
+  try:
+    os.mkdir(fdir)
+  except OSError:
+    print('\nDirectory "%s" already exist\n' % fdir)
+  else:
+    print('\nSuccessfully created the directory "%s" \n' % fdir)
+
+def standard_deviation():
+  global R_scale, g_scale, c_scale
+  R_scale = R_tai*args.R_tol  # Stardard deviation for "R_ta" values
+  g_scale = gi*args.g_tol     # Standard deviation for "g" values
+  c_scale = ci*args.c_tol     # Standard deviation for "c" values
 
 
 def generate_arrays(R_tol, g_tol, c_tol):
-  global R_tai, gi, ci, pix_v, pix_h
+  global R_tai, gi, ci, pix_v, pix_h, g, c, Rta
   print("Coefficients used:")
   print("R_tol: ", R_tol)
   print("g_tol: ", g_tol)
   print("c_tol: ", c_tol)
-  Rta = np.random.normal(loc=R_tai, scale=R_tol, size=(pix_v,pix_h))
-  g = np.random.normal(loc=gi, scale=g_tol, size=(pix_v,pix_h))
-  c = np.random.normal(loc=ci, scale=c_tol, size=(pix_v,pix_h))
-    
-  R0 = np.zeros((pix_v, pix_h))
-  tau = np.zeros((pix_v, pix_h))
-  row = np.arange(0,pix_v,1)
-  column = np.arange(0,pix_h,1)
+  Rta = np.random.normal(loc=R_tai, scale=R_tol, size=(pix_v_all,pix_h_all))
+  g = np.random.normal(loc=gi, scale=g_tol, size=(pix_v_all,pix_h_all))
+  c = np.random.normal(loc=ci, scale=c_tol, size=(pix_v_all,pix_h_all))
+
+  R0 = np.zeros((pix_v_all, pix_h_all))
+  tau = np.zeros((pix_v_all, pix_h_all))
+  row = np.arange(pix_v_all)
+  column = np.arange(pix_h_all)
   for r in row:
     for col in column:
       R0[r][col] = Rta[r][col] / (np.exp(Ea/(k*T_s)))
@@ -78,4 +87,10 @@ def generate_arrays(R_tol, g_tol, c_tol):
   np.savetxt('tolerance_data/R0_tolerance.txt', R0)
   np.savetxt('tolerance_data/tau_tolerance.txt', tau)
   print("Done.")
-generate_arrays(R_scale, g_scale, c_scale)
+
+
+if __name__ == '__main__':
+  collect_data()
+  make_dir()
+  standard_deviation()
+  generate_arrays(R_scale, g_scale, c_scale)
