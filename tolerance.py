@@ -1,8 +1,10 @@
+import sys
 import sys_param as sp
 import numpy as np
 from scipy.constants import k
 import argparse
 import os
+
 
 parser = argparse.ArgumentParser(
     description='''
@@ -27,7 +29,12 @@ parser.add_argument('c_tol', type=float,
   help='Standard deviation for normal distribution of "c" as coefficient \
   for  nominal value')
 
+
+if len(sys.argv) == 1:
+  parser.print_help(sys.stderr)
+  sys.exit(1)
 args = parser.parse_args()
+
 
 def collect_data():
   # System parameters defined in "sys_param.py"
@@ -55,6 +62,7 @@ def make_dir():
   else:
     print('\nSuccessfully created the directory "%s" \n' % fdir)
 
+
 def standard_deviation():
   global R_scale, g_scale, c_scale
   R_scale = R_tai*args.R_tol  # Stardard deviation for "R_ta" values
@@ -71,7 +79,6 @@ def generate_arrays(R_tol, g_tol, c_tol):
   Rta = np.random.normal(loc=R_tai, scale=R_tol, size=(pix_v_all,pix_h_all))
   g = np.random.normal(loc=gi, scale=g_tol, size=(pix_v_all,pix_h_all))
   c = np.random.normal(loc=ci, scale=c_tol, size=(pix_v_all,pix_h_all))
-
   R0 = np.zeros((pix_v_all, pix_h_all))
   tau = np.zeros((pix_v_all, pix_h_all))
   row = np.arange(pix_v_all)
