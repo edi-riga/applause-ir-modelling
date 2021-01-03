@@ -28,7 +28,8 @@ group1.add_argument('-sc', '--skimmingcolumn', action='store_true',
                     help="Use skimming column as reference for integrator")
 group1.add_argument('-ev', '--externalvoltage', action='store_true',
                     help="Use external voltage as reference for integrator")
-parser.add_argument('-rt', '--removetemperature', action='store_true', default=0)
+parser.add_argument('-rt', '--removetemperature', action='store_true', 
+                    help='Use boundary pixels to remove temperature offset' default=0)
 group2 = parser.add_mutually_exclusive_group()
 group2.add_argument('-ff', '--fromfile', action='store_true',
                     help='BB IR power distribution token from file')
