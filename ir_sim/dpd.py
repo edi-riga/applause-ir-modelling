@@ -86,7 +86,7 @@ def dpd(data, lim=sp.lim, pix_num=sp.pix_num):
         frames, pix_v, pix_h = data.shape
         out = np.zeros((pix_v, pix_h))
         for f in range(frames):
-            print(f'Processing frame {f}/{frames}')
+            print(f'Processing frame {f+1}/{frames}')
             out += dpd(data[f], lim, pix_num)
         return out >= 1
     elif len(data.shape) == 2:
@@ -104,18 +104,20 @@ def dpd(data, lim=sp.lim, pix_num=sp.pix_num):
             Buff[r][i] = data[r][half_pix_num + 1 + i]
             Buff[r][pix_h + half_pix_num + i] = data[r][pix_h - extend - 1 + i]
   
-    dp_map_one = np.zeros((pix_v, pix_h))
-    dp_map_two = np.zeros((pix_v, pix_h))
+    dp_map = np.zeros((pix_v, pix_h))
+    
     for r in row:
         for col in column:
+            if np.isnan(data[r][col]):
+                dp_map[r][col] = 1
+                continue
+            
             ma = np.average(Buff[r][col : col + extend])
             tp = Buff[r][half_pix_num + col]
             dif_abs = np.abs(tp - ma)
             th = ma * lim
-            #print("ma =", ma, "tp =", tp, "dif_abs =", dif_abs, "th =", th)
-            if (dif_abs >= th):
+            if (dif_abs >= th):  # First stage check
                 #print("ma =", ma, "tp =", tp, "dif_abs =", dif_abs,"th =", th)
-                dp_map_one[r][col] = 1
                 adj_left = Buff[r][col - 1]
                 adj_right = Buff[r][col + 1]
                 adj_hor = np.array([adj_left, adj_right])
@@ -134,25 +136,11 @@ def dpd(data, lim=sp.lim, pix_num=sp.pix_num):
                 dif = np.abs(tp - est)
                 hdpv = np.abs(tp - ma)
                 check = np.abs(avg - hdpv)
-                #print("est =",est,"avg =",avg,"dif =",dif,"hdpv =", hdpv, "check =", check)
-                if dif >= check:
-                    dp_map_two[r][col] = 1
+                if dif >= check:  # Second stage check
+                    #print("est =",est,"avg =",avg,"dif =",dif,"hdpv =", hdpv, "check =", check)
+                    dp_map[r][col] = 1
 
-    dp_map_final = np.zeros((pix_v, pix_h))
-
-    for r in row:
-        for col in column:
-            if ((dp_map_two[r][col] == 1)):
-                #stuck_l_dp_map[r][col] = 1
-                dp_map_final[r][col] = 1
-            if ((dp_map_one[r][col] == 1)):
-                #stuck_h_dp_map[r][col] = 1
-                dp_map_final[r][col] = 1
-            # 
-            if np.isnan(data[r][col]):
-                dp_map_final[r][col] = 1
-    
-    return dp_map_final
+    return dp_map
 
 
 def replace_dead(data, dp_map):
