@@ -3,9 +3,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ir_sim import sys_param as sp
-from ir_sim import tolerance as t
-from ir_sim import blackbody as bb
 from ir_sim import frame_gen as g
 from ir_sim import nuc
 from ir_sim import dpd
@@ -73,31 +70,27 @@ R_tol = g_tol = c_tol = 1e-5
 T = np.linspace(300, 400, 10)
 pix_v = 100
 pix_h = 120
-pix_v_all = pix_v + 2*(sp.boundary_pix + sp.skimming_pix)
-pix_h_all = pix_h + 2*(sp.boundary_pix + sp.skimming_pix)
+seed = 123
 
 # C may be 0.8 (lowest gain), 0.4, 0.2 and 0.1 pF (highest gain)
 C = 0.4e-12
 
 gen_params = {
-    'sensor': (pix_v_all, pix_h_all, sp.skimming_pix, sp.boundary_pix),
-    'opamp': (sp.R1, sp.R2, sp.R3, C)
+    'R_tol': R_tol,
+    'g_tol': g_tol,
+    'c_tol': c_tol,
+    'pix_v': pix_v,
+    'pix_h': pix_h,
+    'seed': seed,
+    'C': C
 }
 
 
 try:
     frames = np.loadtxt('data_test1/frames.txt').reshape(T.size, pix_v, pix_h)
-    tol = t.load_data('data_test1')
-    P = np.loadtxt('data_test1/P.txt').reshape(T.size, pix_v, pix_h)
 except:
-    Pcam = bb.integration(T)
-    P = bb.power_distribution_over_sens_area(Pcam, size=(pix_v, pix_h))
-    
-    tol = t.generate_arrays(R_tol, g_tol, c_tol, size=(pix_v_all, pix_h_all))
-    gen_params['tol'] = tol
-    
     gg = g.FrameGen(**gen_params)
-    frames_all = gg.run_frames(P, Pcam[0])
+    frames_all = gg.run_frames(T, T[0])
     frames = gg.filter_actives(frames_all)
     
     
@@ -106,33 +99,33 @@ except:
     except:
         pass
     
-    t.save_data('data_test1', *tol)
     
     with open('data_test1/frames.txt', 'w') as outf:
         for f in frames:
             np.savetxt(outf, f)
-    
-    with open('data_test1/P.txt', 'w') as outf:
-        for p in P:
-            np.savetxt(outf, p)
 
 ###############
 # Correction
 ###############
 
+print("Dead pixel replacement 1")
 dp = dpd.dpd(frames)
-satp = dpd.saturated_pixels(frames)
+#satp = dpd.saturated_pixels(frames)
 stuck = dpd.stuck_pixels(frames)
-dp = np.logical_or(dp, stuck)
+#dp = np.logical_or(dp, stuck)
+dp = stuck
 
 frames_fixed = dpd.replace_dead(frames, dp)
 
+print("Non-uniformity correction")
 coefs = nuc.coeff_calc(frames_fixed, T, points=3, quad=1)
 corr = nuc.nuc(frames_fixed, coefs)
 
+print("Dead pixel replacement 2")
 dp2 = dpd.dpd(corr, lim=0.01)
 corr_fixed = dpd.replace_dead(corr, dp2)
 
+print("Temperature")
 coefs_lt = nuc.coeff_linear_temp(corr_fixed, T)
 corr_lt = nuc.linear_temp(corr_fixed, coefs_lt)
 
@@ -141,19 +134,15 @@ corr_lt = nuc.linear_temp(corr_fixed, coefs_lt)
 # Figures
 ##########
 
-plt.figure()
-plt.title('power distribution')
-plt.imshow(P[-1])
-
 _, _, t = imshow_i(frames, title='active pixels', vmin=0, vmax=3.2)
 
 plt.figure()
 plt.imshow(dp, vmin=0, vmax=1, cmap='Reds')
 plt.title('dead pixels')
 
-plt.figure()
-plt.imshow(satp, vmin=0, vmax=1, cmap='Reds')
-plt.title('saturated pixels')
+#plt.figure()
+#plt.imshow(satp, vmin=0, vmax=1, cmap='Reds')
+#plt.title('saturated pixels')
 
 plt.figure()
 plt.imshow(frames_fixed[-1], vmin=0, vmax=3.2)

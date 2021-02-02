@@ -4,9 +4,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ir_sim import sys_param as sp
-from ir_sim import tolerance as t
-from ir_sim import blackbody as bb
 from ir_sim import frame_gen as g
 from ir_sim import nuc
 from ir_sim import dpd
@@ -74,15 +71,19 @@ R_tol = g_tol = c_tol = 1e-5
 T = np.linspace(300, 400, 10)
 pix_v = 100
 pix_h = 120
-pix_v_all = pix_v + 2*(sp.boundary_pix + sp.skimming_pix)
-pix_h_all = pix_h + 2*(sp.boundary_pix + sp.skimming_pix)
+seed = 123
 
 # C may be 0.8 (lowest gain), 0.4, 0.2 and 0.1 pF (highest gain)
 C = 0.4e-12
 
 gen_params = {
-    'sensor': (pix_v_all, pix_h_all, sp.skimming_pix, sp.boundary_pix),
-    'opamp': (sp.R1, sp.R2, sp.R3, C)
+    'R_tol': R_tol,
+    'g_tol': g_tol,
+    'c_tol': c_tol,
+    'pix_v': pix_v,
+    'pix_h': pix_h,
+    'seed': seed,
+    'C': C
 }
 
 try:
@@ -91,31 +92,26 @@ try:
     frames_all_const1 = np.loadtxt('data_test2/frames_const1.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
     frames_all_const2 = np.loadtxt('data_test2/frames_const2.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
     frames_all_const3 = np.loadtxt('data_test2/frames_const3.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
-    tol = t.load_data('data_test2')
-    gen_params['tol'] = tol
     gg = g.FrameGen(**gen_params)
 except:
-    Pcam_up = bb.integration(T)
-    Pcam_down = Pcam_up[::-1]
-    Pcam_const1 = Pcam_up[0] + np.zeros(Pcam_up.shape)
-    Pcam_const2 = Pcam_up[-1] + np.zeros(Pcam_up.shape)
-    Pcam_const3 = Pcam_up[len(Pcam_up) // 2] + np.zeros(Pcam_up.shape)
-    P = bb.power_distribution_over_sens_area(Pcam_up, size=(pix_v, pix_h))
+    Tcam_up = T
+    Tcam_down = T[::-1]
+    Tcam_const1 = Tcam_up[0] + np.zeros(Tcam_up.shape)
+    Tcam_const2 = Tcam_up[-1] + np.zeros(Tcam_up.shape)
+    Tcam_const3 = Tcam_up[len(Tcam_up) // 2] + np.zeros(Tcam_up.shape)
     
-    tol = t.generate_arrays(R_tol, g_tol, c_tol, size=(pix_v_all, pix_h_all))
-    gen_params['tol'] = tol
     gg = g.FrameGen(**gen_params)
     
     print('--- Rising camera temperature ---')
-    frames_all_up = gg.run_frames(P, Pcam_up)
+    frames_all_up = gg.run_frames(T, Tcam_up)
     print('--- Falling camera temperature ---')
-    frames_all_down = gg.run_frames(P, Pcam_down)
+    frames_all_down = gg.run_frames(T, Tcam_down)
     print('--- Constant camera temperature 1 ---')
-    frames_all_const1 = gg.run_frames(P, Pcam_const1)
+    frames_all_const1 = gg.run_frames(T, Tcam_const1)
     print('--- Constant camera temperature 2 ---')
-    frames_all_const2 = gg.run_frames(P, Pcam_const2)
+    frames_all_const2 = gg.run_frames(T, Tcam_const2)
     print('--- Constant camera temperature 3 ---')
-    frames_all_const3 = gg.run_frames(P, Pcam_const3)
+    frames_all_const3 = gg.run_frames(T, Tcam_const3)
     
     try:
         os.mkdir('data_test2')
@@ -142,7 +138,6 @@ except:
         for f in frames_all_const3:
             np.savetxt(outf, f)
     
-    t.save_data('data_test2', *tol)
 
 frames_up = gg.filter_actives(frames_all_up)
 frames_down = gg.filter_actives(frames_all_down)
