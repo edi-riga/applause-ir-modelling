@@ -1,11 +1,10 @@
-#!/usr/bin/python3
-import os
 import numpy as np
 from scipy.constants import k
 
 from . import sys_param as sp
 
-def generate_arrays(R_tol=sp.R_tol, g_tol=sp.g_tol, c_tol=sp.c_tol, size=(sp.pix_v_all, sp.pix_h_all), R_tai = sp.R_ta_i, gi=sp.g_ini, ci=sp.c_ini, Ea=sp.Ea, T_s=sp.T_sa):
+
+def generate_arrays(R_tol=sp.R_tol, g_tol=sp.g_tol, c_tol=sp.c_tol, size=(sp.pix_v_all, sp.pix_h_all), R_tai = sp.R_ta_i, gi=sp.g_ini, ci=sp.c_ini, Ea=sp.Ea, T_s=sp.T_sa, seed=None):
     """
     Generate arrays of microbolometer physical parameters
     
@@ -30,6 +29,9 @@ def generate_arrays(R_tol=sp.R_tol, g_tol=sp.g_tol, c_tol=sp.c_tol, size=(sp.pix
     T_s: float, optional
         Sample time.
     
+    seed: optional
+        Seed for the random number generator. For more information,
+        see the numpy.random.default_rng documentation.
     
     Returns
     -------
@@ -44,44 +46,27 @@ def generate_arrays(R_tol=sp.R_tol, g_tol=sp.g_tol, c_tol=sp.c_tol, size=(sp.pix
     g_scale = gi*g_tol     # Standard deviation for "g" values
     c_scale = ci*c_tol     # Standard deviation for "c" values
     
+    print('Standard deviation coefficients used:')
+    print(f'R_tol: {R_tol}')
+    print(f'g_tol: {g_tol}')
+    print(f'c_tol: {c_tol}')
     
-    print("Coefficients used:")
-    print("R_tol: ", R_tol)
-    print("g_tol: ", g_tol)
-    print("c_tol: ", c_tol)
-    Rta = np.random.normal(loc=R_tai, scale=R_scale, size=size)
-    g = np.random.normal(loc=gi, scale=g_scale, size=size)
-    c = np.random.normal(loc=ci, scale=c_scale, size=size)
+    rng = np.random.default_rng(seed)
+    
+    if seed is not None:
+        print(f'Seed: {seed}')
+    else:
+        print('Using random seed')
+    
+    Rta = rng.normal(loc=R_tai, scale=R_scale, size=size)
+    g = rng.normal(loc=gi, scale=g_scale, size=size)
+    c = rng.normal(loc=ci, scale=c_scale, size=size)
     R0 = np.zeros((pix_v_all, pix_h_all))
     tau = np.zeros((pix_v_all, pix_h_all))
     row = np.arange(pix_v_all)
     column = np.arange(pix_h_all)
-    for r in row:
-        for col in column:
-            R0[r][col] = Rta[r][col] / (np.exp(Ea/(k*T_s)))
-            tau[r][col] = c[r][col] / g[r][col]
+    R0 = Rta / np.exp(Ea/(k*T_s))
+    tau = c / g
     
     return Rta, g, c, R0, tau
 
-
-def save_data(fdir, Rta, g, c, R0, tau):
-  try:
-      os.mkdir(fdir)
-  except OSError:
-      pass
-  print("\nSaving data:")
-  np.savetxt(f'{fdir}/Rta_tolerance.txt', Rta)
-  np.savetxt(f'{fdir}/g_tolerance.txt', g)
-  np.savetxt(f'{fdir}/c_tolerance.txt', c)
-  np.savetxt(f'{fdir}/R0_tolerance.txt', R0)
-  np.savetxt(f'{fdir}/tau_tolerance.txt', tau)
-  print("Done.")
-
-
-def load_data(fdir):
-  Rta = np.loadtxt(f'{fdir}/Rta_tolerance.txt')
-  g = np.loadtxt(f'{fdir}/g_tolerance.txt')
-  c = np.loadtxt(f'{fdir}/c_tolerance.txt')
-  R0 = np.loadtxt(f'{fdir}/R0_tolerance.txt')
-  tau = np.loadtxt(f'{fdir}/tau_tolerance.txt')
-  return Rta, g, c, R0, tau
