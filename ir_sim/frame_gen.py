@@ -24,6 +24,7 @@ class FrameGen:
         
         self._update_pix_v()
         self._update_pix_h()
+        self._update_masks()
         
         # Other parameters
         self.Ib = Ib
@@ -66,6 +67,7 @@ class FrameGen:
     def pix_h(self, val):
         self._pix_h = val
         self._update_pix_h()
+        self._update_masks()
     
     @property
     def pix_v(self):
@@ -75,6 +77,7 @@ class FrameGen:
     def pix_v(self, val):
         self._pix_v = val
         self._update_pix_v()
+        self._update_masks()
     
     @property
     def pix_boundary(self):
@@ -85,6 +88,7 @@ class FrameGen:
         self._pix_boundary = val
         self._update_pix_v()
         self._update_pix_h()
+        self._update_masks()
     
     @property
     def pix_skimming(self):
@@ -95,6 +99,7 @@ class FrameGen:
         self._pix_skimming = val
         self._update_pix_v()
         self._update_pix_h()
+        self._update_masks()
     
     @property
     def pix_h_all(self):
@@ -110,6 +115,18 @@ class FrameGen:
     def _update_pix_h(self):
         self._pix_h_all = self._pix_h + self._pix_boundary*2 + self._pix_skimming*2
     
+    def _update_masks(self):
+        pix_bs = self._pix_boundary + self._pix_skimming
+        mask_active = np.zeros((self._pix_v_all, self._pix_h_all))
+        mask_active[pix_bs:self._pix_v_all-pix_bs, pix_bs:self._pix_h_all-pix_bs] = np.ones((self._pix_v, self._pix_h))
+        mask_skimming = np.ones((self._pix_v_all, self._pix_h_all))
+        mask_skimming[self.pix_skimming:self._pix_v_all-self.pix_skimming, \
+                      self.pix_skimming:self._pix_h_all-self.pix_skimming] = np.zeros((self._pix_v + 2*self._pix_boundary, \
+                                                                                       self._pix_h + 2*self._pix_boundary))
+        self.mask_active = mask_active.astype(np.bool)
+        self.mask_skimming = mask_skimming.astype(np.bool)
+        self.mask_boundary = np.logical_and(np.logical_not(mask_active), np.logical_not(mask_skimming))
+    
     def _generate_tol_arrays(self):
         self.Rta, self.g, \
         self.c, self.R0, self.tau = tol_arrays(self.R_tol, self.g_tol, self.c_tol, (self.pix_v_all,
@@ -117,26 +134,13 @@ class FrameGen:
                                                self.Ea, self.T_sa, self.seed) 
     
     def is_pixel_skimming(self, r, col):
-        return (r==0) or \
-               (r<=(self.pix_skimming-1)) or \
-               (r==(self.pix_v_all-1)) or \
-               (r >= (self.pix_v_all - self.pix_skimming)) or \
-               (col == 0) or \
-               (col <= (self.pix_skimming-1)) or \
-               (col >= (self.pix_h_all - self.pix_skimming)) or \
-               (col == (self.pix_h_all -1 ))
+        return self.mask_skimming[r, col]
     
     def is_pixel_boundary(self, r, col):
-        return ((r >= self.pix_skimming) and (r < (self.pix_skimming + self.pix_boundary))) or \
-               ((r >= (self.pix_v_all - self.pix_skimming - self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming))) or \
-               ((r >= (self.pix_skimming + self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming - self.pix_boundary)) and \
-                   (col >= self.pix_skimming) and (col < (self.pix_skimming + self.pix_boundary))) or \
-               ((r >= (self.pix_skimming + self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming - self.pix_boundary)) and \
-                   (col >= (self.pix_h_all - self.pix_skimming - self.pix_boundary)) and (col < (self.pix_h_all - self.pix_skimming)))
+        return self.mask_boundary[r, col]
     
     def is_pixel_active(self, r, col):
-        return (((r >= (self.pix_skimming + self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming - self.pix_boundary))) and \
-            ((col >= (self.pix_skimming + self.pix_boundary)) and (col < (self.pix_h_all - self.pix_skimming - self.pix_boundary))))
+        return self.mask_active[r, col]
     
     def solve_pixel(self, r, col, Q):
         """Calculates pixel voltage integrated over the set integration time"""
