@@ -14,7 +14,7 @@ class FrameGen:
                  T_sa=sp.T_sa, int_time=sp.int_time, R1=sp.R1, R2=sp.R2, R3=sp.R3, C=sp.C,
                  R_tol=sp.R_tol, g_tol=sp.g_tol, c_tol=sp.c_tol, R_tai = sp.R_ta_i, gi=sp.g_ini,
                  ci=sp.c_ini, seed=None, lambd=(sp.lambd1, sp.lambd2), Phi=(sp.Phi_r, sp.Phi_s),
-                 A_sens=sp.A_sens, Omega=sp.Omega, fl=sp.fl, pitch=sp.pitch):
+                 A_sens=sp.A_sens, Omega=sp.Omega, fl=sp.fl, pitch=sp.pitch, max_analog=sp.max_analog):
         
         # Pixels
         self._pix_h = pix_h
@@ -55,6 +55,8 @@ class FrameGen:
         self.fl = fl
         self.pitch = pitch
         
+        self.max_analog = max_analog
+    
     
     @property
     def pix_h(self):
@@ -101,13 +103,12 @@ class FrameGen:
     @property
     def pix_v_all(self):
         return self._pix_v_all
-
+    
     def _update_pix_v(self):
         self._pix_v_all = self._pix_v + self._pix_boundary*2 + self._pix_skimming*2
     
     def _update_pix_h(self):
         self._pix_h_all = self._pix_h + self._pix_boundary*2 + self._pix_skimming*2
-
     
     def _generate_tol_arrays(self):
         self.Rta, self.g, \
@@ -116,102 +117,68 @@ class FrameGen:
                                                self.Ea, self.T_sa, self.seed) 
     
     def is_pixel_skimming(self, r, col):
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        return ((r==0) or (r<=(s_pix-1)) or (r==(pix_v_all-1)) or (r >= (pix_v_all - s_pix)) or (col == 0) or \
-                (col <= (s_pix-1)) or (col >= (pix_h_all - s_pix)) or  (col == (pix_h_all -1 )))
+        return (r==0) or \
+               (r<=(self.pix_skimming-1)) or \
+               (r==(self.pix_v_all-1)) or \
+               (r >= (self.pix_v_all - self.pix_skimming)) or \
+               (col == 0) or \
+               (col <= (self.pix_skimming-1)) or \
+               (col >= (self.pix_h_all - self.pix_skimming)) or \
+               (col == (self.pix_h_all -1 ))
     
     def is_pixel_boundary(self, r, col):
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
-        return ((r >= s_pix) and (r < (s_pix + b_pix))) or ((r >= (pix_v_all - s_pix - b_pix)) and \
-            (r < (pix_v_all - s_pix))) or ( (r >= (s_pix + b_pix)) and (r < (pix_v_all - s_pix - b_pix)) and \
-            (col >= s_pix) and (col < (s_pix + b_pix)) ) or ( (r >= (s_pix + b_pix)) and \
-            (r < (pix_v_all - s_pix - b_pix)) and (col >= (pix_h_all - s_pix - b_pix)) and \
-            (col < (pix_h_all - s_pix)))
-
+        return ((r >= self.pix_skimming) and (r < (self.pix_skimming + self.pix_boundary))) or \
+               ((r >= (self.pix_v_all - self.pix_skimming - self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming))) or \
+               ((r >= (self.pix_skimming + self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming - self.pix_boundary)) and \
+                   (col >= self.pix_skimming) and (col < (self.pix_skimming + self.pix_boundary))) or \
+               ((r >= (self.pix_skimming + self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming - self.pix_boundary)) and \
+                   (col >= (self.pix_h_all - self.pix_skimming - self.pix_boundary)) and (col < (self.pix_h_all - self.pix_skimming)))
+    
     def is_pixel_active(self, r, col):
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
-        return (((r >= (s_pix + b_pix)) and (r < (pix_v_all - s_pix - b_pix))) and \
-            ((col >= (s_pix + b_pix)) and (col < (pix_h_all - s_pix - b_pix))))
-
+        return (((r >= (self.pix_skimming + self.pix_boundary)) and (r < (self.pix_v_all - self.pix_skimming - self.pix_boundary))) and \
+            ((col >= (self.pix_skimming + self.pix_boundary)) and (col < (self.pix_h_all - self.pix_skimming - self.pix_boundary))))
+    
     def solve_pixel(self, r, col, Q):
         """Calculates pixel voltage integrated over the set integration time"""
-        Rta = self.R_tai
-        g_th = self.g
-        c_th = self.c
-        R0 = self.R0
-        tau = self.tau
-        I = self.Ib
-        Ea = self.Ea
-        T_s = self.T_sa
-        itime =  self.int_time
-        return fsolve(lambda Va: Va - I*R0[r][col] * exp(Ea / (k * T_s + k*((I*Va + Q) / \
-            g_th[r][col])*(1+(tau[r][col] / itime) * (exp(-itime/tau[r][col]) - 1)  ) )), 0)
+        return fsolve(lambda Va: Va - self.Ib*self.R0[r][col] * exp(self.Ea / (k * self.T_sa + k*((self.Ib*Va + Q) / \
+            self.g[r][col])*(1+(self.tau[r][col] / self.int_time) * (exp(-self.int_time/self.tau[r][col]) - 1)  ) )), 0)
     
     def solve_pixel_inst(self, r, col):
         """Calculates the instantaneous value of a pixel voltage at the end of integration time"""
-        Rta = self.R_tai
-        g_th = self.g
-        c_th = self.c
-        R0 = self.R0
-        tau = self.tau
-        I = self.Ib
-        Ea = self.Ea
-        T_s = self.T_sa
-        itime =  self.int_time
-        return fsolve(lambda Vs: Vs - I * R0[r][col] * exp(Ea / ( k * (T_s + (I*Vs/g_th[r][col]) * \
-            (1 - exp(-itime/tau[r][col]))))), 0)
+        return fsolve(lambda Vs: Vs - self.Ib * self.R0[r][col] * exp(self.Ea / ( k * (self.T_sa + (self.Ib*Vs/self.g[r][col]) * \
+            (1 - exp(-self.int_time/self.tau[r][col]))))), 0)
     
     def pixel_values(self, i, r, col):
         """Calculates output voltage of each active pixels
         at given bias current, sensor temperature and IR power impinged"""
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
         if self.is_pixel_skimming(r, col):
             self.V_all[i][r][col] = self.solve_pixel(r, col, 0)
             self.V_skim [i][r][col] = self.solve_pixel_inst(r, col)
         elif self.is_pixel_boundary(r, col):
-            #Q = self.Pcam[0]
             Q = self.Pcam[i]
             self.V_all[i][r][col] =  self.solve_pixel(r, col, Q)
         elif self.is_pixel_active(r, col):
-            #Q = self.P[i][r - s_pix - b_pix][col - s_pix - b_pix] + self.Pcam[0]
-            Q = self.P[i][r - s_pix - b_pix][col - s_pix - b_pix] + self.Pcam[i]
+            Q = self.P[i][r - self.pix_skimming - self.pix_boundary][col - self.pix_skimming - self.pix_boundary] + self.Pcam[i]
             self.V_all[i][r][col] =  self.solve_pixel(r, col, Q)
     
     def run_pixels(self, P, Pcam):
         self._generate_tol_arrays()
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
         self.P = P
         if not isinstance(Pcam, np.ndarray) or len(Pcam) == 1:
-            self.Pcam = Pcam + np.zeros(len(P))
+            self.Pcam = Pcam + np.zeros(len(P))  # Constant camera temperature
         else:
             self.Pcam = Pcam
-        self.V_all   = np.ones((len(P), pix_v_all, pix_h_all))
-        self.V_skim  = np.ones((len(P), pix_v_all, pix_h_all))
+        self.V_all   = np.ones((len(P), self.pix_v_all, self.pix_h_all))
+        self.V_skim  = np.ones((len(P), self.pix_v_all, self.pix_h_all))
         
-        row = np.arange(pix_v_all)
-        column = np.arange(pix_h_all)
+        row = np.arange(self.pix_v_all)
+        column = np.arange(self.pix_h_all)
         for i in np.arange(len(P)):
-            nr = i+1
-            print("Processing frame Nr %s" %nr)
-            print(strftime("%H:%M:%S", localtime()))
+            print(f'[{strftime("%H:%M:%S", localtime())}] Processing frame {i+1}/{len(P)}')
             for r in row:
                 for col in column:
                     self.pixel_values(i, r, col)
-       
+    
     def roic_function(self, i, r, col):
         pix_v_all = self.pix_v_all
         pix_h_all = self.pix_h_all
@@ -230,33 +197,33 @@ class FrameGen:
             # BECAUSE SKIMMING PIXELS ARE SIMULTANEOUSLY CONNECTED TO ALL INTEGRATORS IN THE ROW.
             if s_pix == 1:
                 # Average value of skimming in the current row
-                skimming_average_int = np.average( [V_all[i][r+s_pix][0], V_all[i][r+s_pix][pix_h_all - 1]] )
-                skimming_average = np.average([V_skim[i][r+s_pix][0], V_skim[i][r+s_pix][pix_h_all - 1]])
-                self.V_out[i][r][col] = (1/(R1*C)) * ( (R3 /(R2+R3)) * skimming_average_int \
-                    - V_all[i][r+s_pix][col+s_pix] ) + (R3 /(R2+R3) * skimming_average)
+                skimming_average_int = np.average( [V_all[i][r+self.pix_skimming][0], V_all[i][r+self.pix_skimming][self.pix_h_all - 1]] )
+                skimming_average = np.average([V_skim[i][r+self.pix_skimming][0], V_skim[i][r+self.pix_skimming][self.pix_h_all - 1]])
+                self.V_out[i][r][col] = (1/(self.R1*self.C)) * ( (self.R3 /(self.R2+self.R3)) * skimming_average_int \
+                    - V_all[i][r+self.pix_skimming][col+self.pix_skimming] ) + (self.R3 /(self.R2+self.R3) * skimming_average)
             else:
                 pass # TO DO: Here should be defined the ROIC function if sensor has more than 1 ring of skimming pixels
             # Integrators' analog output saturation:
             if self.V_out[i][r][col] < 0:
                 self.V_out[i][r][col] = 0
-            elif self.V_out[i][r][col] >= 3.2:
-                self.V_out[i][r][col] = 3.2
+            elif self.V_out[i][r][col] >= self.max_analog:
+                self.V_out[i][r][col] = self.max_analog
         else:
             # Skimming row is chosen
             # TO DO: Skimming pixels become HOT!!!
             if s_pix == 1:
                 # Average value of skimming in the current row
-                skimming_average_int = np.average([V_all[i][0][col+s_pix], V_all[i][pix_v_all - 1][col+s_pix]])
-                skimming_average = np.average([V_skim[i][0][col+s_pix], V_skim[i][pix_v_all - 1][col+s_pix]])
-                self.V_out[i][r][col] = (1 / (R1 * C)) * ((R3 /(R2+R3)) * skimming_average_int\
-                    - V_all[i][r+s_pix][col+s_pix])+(R3 /(R2+R3)*skimming_average)
+                skimming_average_int = np.average([V_all[i][0][col+self.pix_skimming], V_all[i][self.pix_v_all - 1][col+self.pix_skimming]])
+                skimming_average = np.average([V_skim[i][0][col+self.pix_skimming], V_skim[i][self.pix_v_all - 1][col+self.pix_skimming]])
+                self.V_out[i][r][col] = (1 / (self.R1 * self.C)) * ((self.R3 /(self.R2+self.R3)) * skimming_average_int\
+                    - V_all[i][r+self.pix_skimming][col+self.pix_skimming])+(self.R3 /(self.R2+self.R3)*skimming_average)
             else:
                 pass # TO DO: Here should be defined the ROIC function if sensor has more than 1 ring of skimming pixels
             
             if self.V_out[i][r][col] < 0:
                 self.V_out[i][r][col] = 0
-            elif self.V_out[i][r][col] >= 3.2:
-                self.V_out[i][r][col] = 3.2
+            elif self.V_out[i][r][col] >= self.max_analog:
+                self.V_out[i][r][col] = self.max_analog
             # TO DO: If external voltage is used as the reference of integrator (NON-INVERTING INPUT)
             # elif args.externalvoltage:
             #   # External voltage as reference
@@ -288,13 +255,9 @@ class FrameGen:
         return self.V_out
     
     def run_roic(self):
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
-        self.V_out = np.ones((len(self.P), pix_v_all-s_pix*2, pix_h_all-s_pix*2))
-        row_for_out = np.arange(pix_v_all-s_pix*2)
-        col_for_out = np.arange(pix_h_all-s_pix*2)
+        self.V_out = np.ones((len(self.P), self.pix_v_all-self.pix_skimming*2, self.pix_h_all-self.pix_skimming*2))
+        row_for_out = np.arange(self.pix_v_all-self.pix_skimming*2)
+        col_for_out = np.arange(self.pix_h_all-self.pix_skimming*2)
         for i in np.arange(len(self.P)):
             for r in row_for_out:
                 for col in col_for_out:
@@ -302,30 +265,22 @@ class FrameGen:
     
     def filter_actives(self, frames):
         """Returns the active pixels of a complete pixel array"""
-        pix_v = self.pix_v
-        pix_h = self.pix_h
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
-        row_im = np.arange(pix_v)
-        col_im = np.arange(pix_h)
-        out = np.ones((len(frames), pix_v, pix_h))
+        row_im = np.arange(self.pix_v)
+        col_im = np.arange(self.pix_h)
+        out = np.ones((len(frames), self.pix_v, self.pix_h))
         for i in np.arange(len(frames)):
             for r in row_im:
                 for col in col_im:
-                    out[i][r][col] = frames[i][r + s_pix + b_pix - 1][col + s_pix + b_pix - 1]
+                    out[i][r][col] = frames[i][r + self.pix_skimming + self.pix_boundary - 1][col + self.pix_skimming + self.pix_boundary - 1]
         return out
     
     def boundary_average(self, frames):
         """
         """
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
         bavg = np.zeros(len(frames))
         for f in range(len(frames)):
-            b_hor = np.concatenate([frames[f,:,:s_pix], frames[f,:,-s_pix:]])
-            b_ver = np.concatenate([frames[f,:s_pix,:], frames[f,-s_pix:,:]])
+            b_hor = np.concatenate([frames[f,:,:self.pix_skimming], frames[f,:,-self.pix_skimming:]])
+            b_ver = np.concatenate([frames[f,:self.pix_skimming,:], frames[f,-self.pix_skimming:,:]])
             bavg[f] = np.average(np.concatenate([b_hor.reshape(b_hor.size), b_ver.reshape(b_ver.size)]))
         return bavg
 
