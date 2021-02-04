@@ -184,27 +184,16 @@ class FrameGen:
                     self.pixel_values(i, r, col)
     
     def roic_function(self, i, r, col):
-        pix_v_all = self.pix_v_all
-        pix_h_all = self.pix_h_all
-        s_pix = self.pix_skimming
-        b_pix = self.pix_boundary
-        R1 = self.R1
-        R2 = self.R2
-        R3 = self.R3
-        C = self.C
-        V_all = self.V_all
-        V_skim = self.V_skim
-        
         if self.skimmingcolumn:
             # Skimming column is chosen
             # TO DO: PARASITIC DECREASE OF NON-INVERTING INPUT IMPEDANCE,
             # BECAUSE SKIMMING PIXELS ARE SIMULTANEOUSLY CONNECTED TO ALL INTEGRATORS IN THE ROW.
-            if s_pix == 1:
+            if self.pix_skimming == 1:
                 # Average value of skimming in the current row
-                skimming_average_int = np.average( [V_all[i][r+self.pix_skimming][0], V_all[i][r+self.pix_skimming][self.pix_h_all - 1]] )
-                skimming_average = np.average([V_skim[i][r+self.pix_skimming][0], V_skim[i][r+self.pix_skimming][self.pix_h_all - 1]])
+                skimming_average_int = np.average( [self.V_all[i][r+self.pix_skimming][0], self.V_all[i][r+self.pix_skimming][self.pix_h_all - 1]] )
+                skimming_average = np.average([self.V_skim[i][r+self.pix_skimming][0], self.V_skim[i][r+self.pix_skimming][self.pix_h_all - 1]])
                 self.V_out[i][r][col] = (1/(self.R1*self.C)) * ( (self.R3 /(self.R2+self.R3)) * skimming_average_int \
-                    - V_all[i][r+self.pix_skimming][col+self.pix_skimming] ) + (self.R3 /(self.R2+self.R3) * skimming_average)
+                    - self.V_all[i][r+self.pix_skimming][col+self.pix_skimming] ) + (self.R3 /(self.R2+self.R3) * skimming_average)
             else:
                 pass # TO DO: Here should be defined the ROIC function if sensor has more than 1 ring of skimming pixels
             # Integrators' analog output saturation:
@@ -215,12 +204,12 @@ class FrameGen:
         else:
             # Skimming row is chosen
             # TO DO: Skimming pixels become HOT!!!
-            if s_pix == 1:
+            if self.pix_skimming == 1:
                 # Average value of skimming in the current row
-                skimming_average_int = np.average([V_all[i][0][col+self.pix_skimming], V_all[i][self.pix_v_all - 1][col+self.pix_skimming]])
-                skimming_average = np.average([V_skim[i][0][col+self.pix_skimming], V_skim[i][self.pix_v_all - 1][col+self.pix_skimming]])
+                skimming_average_int = np.average([self.V_all[i][0][col+self.pix_skimming], self.V_all[i][self.pix_v_all - 1][col+self.pix_skimming]])
+                skimming_average = np.average([self.V_skim[i][0][col+self.pix_skimming], self.V_skim[i][self.pix_v_all - 1][col+self.pix_skimming]])
                 self.V_out[i][r][col] = (1 / (self.R1 * self.C)) * ((self.R3 /(self.R2+self.R3)) * skimming_average_int\
-                    - V_all[i][r+self.pix_skimming][col+self.pix_skimming])+(self.R3 /(self.R2+self.R3)*skimming_average)
+                    - self.V_all[i][r+self.pix_skimming][col+self.pix_skimming])+(self.R3 /(self.R2+self.R3)*skimming_average)
             else:
                 pass # TO DO: Here should be defined the ROIC function if sensor has more than 1 ring of skimming pixels
             
