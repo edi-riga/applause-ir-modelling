@@ -3,9 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ir_sim import frame_gen as g
-from ir_sim import nuc
-from ir_sim import dpd
+from ir_sim import FrameGen, nuc, dpd
 
 # https://matplotlib.org/gallery/event_handling/image_slices_viewer.html
 class IndexTracker:
@@ -89,7 +87,7 @@ gen_params = {
 try:
     frames = np.loadtxt('data_test1/frames.txt').reshape(T.size, pix_v, pix_h)
 except:
-    gg = g.FrameGen(**gen_params)
+    gg = FrameGen(**gen_params)
     frames_all = gg.run_frames(T, T[0])
     frames = gg.filter_actives(frames_all)
     

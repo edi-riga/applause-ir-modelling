@@ -4,9 +4,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ir_sim import frame_gen as g
-from ir_sim import nuc
-from ir_sim import dpd
+from ir_sim import FrameGen, nuc, dpd
 
 # https://matplotlib.org/gallery/event_handling/image_slices_viewer.html
 class IndexTracker:
@@ -69,8 +67,8 @@ def imshow_i(data, title, *args, **kwargs):
 
 R_tol = g_tol = c_tol = 1e-5
 T = np.linspace(300, 400, 10)
-pix_v = 100
-pix_h = 120
+pix_v = 50
+pix_h = 54
 seed = 123
 
 # C may be 0.8 (lowest gain), 0.4, 0.2 and 0.1 pF (highest gain)
@@ -86,31 +84,32 @@ gen_params = {
     'C': C
 }
 
+gg = FrameGen(**gen_params)
+
 try:
-    frames_all_up = np.loadtxt('data_test2/frames_up.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
-    frames_all_down = np.loadtxt('data_test2/frames_down.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
-    frames_all_const1 = np.loadtxt('data_test2/frames_const1.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
-    frames_all_const2 = np.loadtxt('data_test2/frames_const2.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
-    frames_all_const3 = np.loadtxt('data_test2/frames_const3.txt').reshape(T.size, pix_v_all-sp.skimming_pix*2, pix_h_all-sp.skimming_pix*2)
-    gg = g.FrameGen(**gen_params)
-except:
+    
+    frames_all_up = np.loadtxt('data_test2/frames_up.txt').reshape(T.size, gg.pix_v_all, gg.pix_h_all)
+    frames_all_down = np.loadtxt('data_test2/frames_down.txt').reshape(T.size, gg.pix_v_all, gg.pix_h_all)
+    frames_all_const1 = np.loadtxt('data_test2/frames_const1.txt').reshape(T.size, gg.pix_v_all, gg.pix_h_all)
+    frames_all_const2 = np.loadtxt('data_test2/frames_const2.txt').reshape(T.size, gg.pix_v_all, gg.pix_h_all)
+    frames_all_const3 = np.loadtxt('data_test2/frames_const3.txt').reshape(T.size, gg.pix_v_all, gg.pix_h_all)
+except Exception as e:
+    print(e)
     Tcam_up = T
     Tcam_down = T[::-1]
     Tcam_const1 = Tcam_up[0] + np.zeros(Tcam_up.shape)
     Tcam_const2 = Tcam_up[-1] + np.zeros(Tcam_up.shape)
     Tcam_const3 = Tcam_up[len(Tcam_up) // 2] + np.zeros(Tcam_up.shape)
     
-    gg = g.FrameGen(**gen_params)
-    
-    print('--- Rising camera temperature ---')
+    print('\n--- Rising camera temperature ---')
     frames_all_up = gg.run_frames(T, Tcam_up)
-    print('--- Falling camera temperature ---')
+    print('\n--- Falling camera temperature ---')
     frames_all_down = gg.run_frames(T, Tcam_down)
-    print('--- Constant camera temperature 1 ---')
+    print('\n--- Constant camera temperature 1 ---')
     frames_all_const1 = gg.run_frames(T, Tcam_const1)
-    print('--- Constant camera temperature 2 ---')
+    print('\n--- Constant camera temperature 2 ---')
     frames_all_const2 = gg.run_frames(T, Tcam_const2)
-    print('--- Constant camera temperature 3 ---')
+    print('\n--- Constant camera temperature 3 ---')
     frames_all_const3 = gg.run_frames(T, Tcam_const3)
     
     try:
