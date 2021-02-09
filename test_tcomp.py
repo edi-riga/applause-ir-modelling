@@ -151,7 +151,7 @@ frames_const3 = gg.filter_actives(frames_all_const3)
 # non-uniformity correction coefficients calculated for one of the constant camera temperatures
 dp = dpd.dpd(frames_const1)
 frames_const1 = dpd.replace_dead(frames_const1, dp)
-coefs = nuc.coeff_calc(frames_const1, T, points=3, quad=1)
+coefs = nuc.coeff_calc(frames_const1, points=3, quad=1)
 corr_const1 = nuc.nuc(frames_const1, coefs)
 corr_const1 = dpd.replace_dead(corr_const1, dpd.dpd(corr_const1))
 

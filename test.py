@@ -116,7 +116,7 @@ dp = stuck
 frames_fixed = dpd.replace_dead(frames, dp)
 
 print("Non-uniformity correction")
-coefs = nuc.coeff_calc(frames_fixed, T, points=3, quad=1)
+coefs = nuc.coeff_calc(frames_fixed, points=3, quad=1)
 corr = nuc.nuc(frames_fixed, coefs)
 
 print("Dead pixel replacement 2")
@@ -124,8 +124,8 @@ dp2 = dpd.dpd(corr, lim=0.01)
 corr_fixed = dpd.replace_dead(corr, dp2)
 
 print("Temperature")
-coefs_lt = nuc.coeff_linear_temp(corr_fixed, T)
-corr_lt = nuc.linear_temp(corr_fixed, coefs_lt)
+coefs_lt = nuc.coeff_calc(corr_fixed, T, points=3, quad=1, average=True)
+corr_lt = nuc.nuc(corr_fixed, coefs_lt)
 
 
 ##########
