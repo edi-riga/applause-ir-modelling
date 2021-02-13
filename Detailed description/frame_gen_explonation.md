@@ -200,7 +200,10 @@ def date_and_time(pr):
 
 #### Calculating output voltages of mikrobolometers or input voltages of ROIC cells at given BIAS current time and value, and IR power radiated by blackbody.
 
+
 ![](Img/integrator.png)
+
+![](Img/Integrator_formula.JPG)
 ```python
 def pixel_values(i,r,col):
   ''' Calculates output voltage of each active pixels
