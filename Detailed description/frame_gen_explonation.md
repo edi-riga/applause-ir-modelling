@@ -1,4 +1,4 @@
-####Importing all necessary and initializing argparse
+#### Importing all necessary and initializing argparse
 
 ```python
 #!/usr/bin/python3
@@ -48,7 +48,7 @@ args = parser.parse_args()
 ```
 ----
 
-####Collecting data from "sys_param(.py)" module and physical parameters of pixels calculated by "tolerance(.py)"
+#### Collecting data from "sys_param(.py)" module and physical parameters of pixels calculated by "tolerance(.py)"
 
 ```python
 def get_system_params():
