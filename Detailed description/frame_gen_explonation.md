@@ -201,6 +201,7 @@ def date_and_time(pr):
 #### Calculations of ROIC output signals
 
 ROIC integrator for each pixel in array has equivalent schematic like on picture below:
+
 ![](Img/integrator.png)
 
 In case if non-inverting input of integrator is grounded (V skimming pixel = 0),
@@ -216,6 +217,15 @@ and only "V skimming pixel" signal is present on non-inverting input,then the ou
 So the final equation for output signal, when both input signals are present is:
 
 ![](Img/Integrator_formula.JPG)
+
+To calculate output values of ROIC integrators for each pixel, first it is necessary to find integral equations 
+of active and skimming pixel equations and momentary value of skimming pixel.
+
+For different types of pixels (active, boundary, skimming), we can use microbolometers equation form:
+
+![](Img/microbolometers_equation_adv.PNG)
+
+IR power "Q" impinged on pixel consist of IR power radiated by blackbody - "Q_bb", and IR power radiated by internal surface of camera body - "Q_cam".
 
 #### Calculating output voltages of mikrobolometers or input voltages of ROIC cells at given BIAS current time and value, and IR power radiated by blackbody.
 ```python
