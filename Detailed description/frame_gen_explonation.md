@@ -227,6 +227,23 @@ For different types of pixels (active, boundary, skimming), we can use microbolo
 
 IR power "Q" impinged on pixel consist of IR power radiated by blackbody - "Q_bb", and IR power radiated by internal surface of camera body - "Q_cam".
 
+Skimming pixels don't receive any IR radiation, so equation has form:
+
+![](Img/Formula_for_skimming.PNG)
+
+To be able to integrate microbolometers equation, first we make manipulations:
+
+![](Img/Before_integration.PNG)
+
+Now we integrate it:
+
+![](Img/Integration.PNG)
+
+Finnaly - we bring it back to the form, similar like before integration:
+
+![](Img/After_integration.PNG)
+
+
 #### Calculating output voltages of mikrobolometers or input voltages of ROIC cells at given BIAS current time and value, and IR power radiated by blackbody.
 ```python
 def pixel_values(i,r,col):
