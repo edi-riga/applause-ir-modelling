@@ -198,12 +198,26 @@ def date_and_time(pr):
 ```
 ----
 
-#### Calculating output voltages of mikrobolometers or input voltages of ROIC cells at given BIAS current time and value, and IR power radiated by blackbody.
+#### Calculations of ROIC output signals
 
-
+ROIC integrator for each pixel in array has equivalent schematic like on picture below:
 ![](Img/integrator.png)
 
+In case if non-inverting input of integrator is grounded (V skimming pixel = 0),
+and only "V active pixel" signal is present on inverting input, then the output signal is:
+
+![](Img/Integrator_formula_only_inv.JPG)
+
+In case if inverting input of integrator is gronded (V active pixel = 0),
+and only "V skimming pixel" signal is present on non-inverting input,then the output signal is:
+
+![](Img/Integrator_formula_only_noninv.JPG)
+
+So the final equation for output signal, when both input signals are present is:
+
 ![](Img/Integrator_formula.JPG)
+
+#### Calculating output voltages of mikrobolometers or input voltages of ROIC cells at given BIAS current time and value, and IR power radiated by blackbody.
 ```python
 def pixel_values(i,r,col):
   ''' Calculates output voltage of each active pixels
