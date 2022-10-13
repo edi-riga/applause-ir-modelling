@@ -5,9 +5,10 @@ sys.path.append('backend')
 sys.path.append('models')
 
 # backend
-from Model import Model
+from Model      import Model
 from Simulation import Simulation
-from Optics import Optics
+from Optics     import Optics
+from Bolometers import Bolometers
 
 # models
 from Blackbody import Blackbody
@@ -47,13 +48,21 @@ blackbody = Blackbody(
 optics = Optics(
   resolution   = (resolution_h, resolution_v),
   focal_length = focal_length,
-    pitch        = bol_dim_h)
+  pitch        = bol_dim_h,
+  visualize    = True)
 
-blackbody.set_args_list([30,40,50,60,70,80,90,100,110,120])
+# Model - Molometers
+bolometers = Bolometers(
+  size_active   = (resolution_h, resolution_v),
+  size_boundary = (2,2,2,2),
+  size_blind    = (1,1,1,1),
+  visualize     = True)
 
+blackbody.set_args_list([30, 50])
 
-sim = Simulation([blackbody, optics], use_cache=False)
 #sim = Simulation([blackbody], use_cache=True)
+#sim = Simulation([blackbody, optics], use_cache=True)
+sim = Simulation([blackbody, optics, bolometers], use_cache=True)
 output = sim.process()
 
 print(output)

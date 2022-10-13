@@ -281,8 +281,8 @@ class FrameGen:
         Tcam = Tcam + np.zeros(len(T))  # Tcam might not be an array
         
         Qcam1d = bb.integration(Tcam, lambd=self.lambd, Phi=self.Phi, A_sens=self.A_sens, Omega=self.Omega)
-        Q0 = bb.integration(T, lambd=self.lambd, Phi=self.Phi, A_sens=self.A_sens, Omega=self.Omega)
-        Qbb = bb.power_distribution_over_sens_area(Q0, size=(self._pix_v_all, self._pix_h_all), fl=self.fl, pitch=self.pitch)
+        Q0     = bb.integration(T,    lambd=self.lambd, Phi=self.Phi, A_sens=self.A_sens, Omega=self.Omega)
+        Qbb    = bb.power_distribution_over_sens_area(Q0, size=(self._pix_v_all, self._pix_h_all), fl=self.fl, pitch=self.pitch)
         
         Qbb = np.where(self.mask_active, Qbb, 0)
         

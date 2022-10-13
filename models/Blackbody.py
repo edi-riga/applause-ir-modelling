@@ -12,7 +12,7 @@ from Model import Model
 
 class Blackbody(Model):
   def __init__(self, T=50, lambd=(8e-6, 14e-6), phi=(0,0), area=17e-6**2, omega=0.75):
-    super().__init__(input_shape=None, output_shape=(1,))
+    super().__init__(input_tuple=None, output_tuple={"P"})
     self.T     = T
     self.lambd_lower, self.lambd_upper = lambd
     self.phi_r, self.phi_s = phi
@@ -41,21 +41,24 @@ class Blackbody(Model):
     '''Calculating IR power that impignes on one pixel sensetive area, if it is
        located in the center of sensor'''
     P = L*np.cos(self.phi_s)*self.area*np.cos(self.phi_r)*self.omega
-    return P
+    return {"P":P}
 
 
-  def store(self, prefix, args, data):
+  def store(self, prefix, args, input_data, output_data):
     with open(prefix + str(args) + '.csv', 'w') as file:
       csvwriter = csv.writer(file)
       csvwriter.writerow('Power')
-      csvwriter.writerow([data])
+      csvwriter.writerow([output_data["P"]])
 
-  def load(self, prefix, args):
+  def load(self, prefix, args, input_data):
     try:
       with open(prefix + str(args) + '.csv', 'r') as file:
         csvreader = csv.reader(file)
         header = next(csvreader)
         data   = next(csvreader)
-        return float(data[0])
+        return {"P": float(data[0])}
     except:
       return None
+
+  def get_parameter_id_str(self, args, input_data):
+    return str(args)
