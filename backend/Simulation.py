@@ -37,8 +37,17 @@ class Simulation():
 
   def is_compatible(self, input_model, output_model):
     for key in output_model.input_tuple:
+
       if key not in input_model.output_tuple:
         print("ERROR: Type mismatch for '"
+          + type(input_model).__name__ + "' and '"
+          + type(output_model).__name__ + "' key '"
+          + key + "' is not found")
+        return False
+
+      if input_model.output_tuple[key] != output_model.input_tuple[key]:
+        print("ERROR: Shape mismatch for '"
+          + key + "' key in '"
           + type(input_model).__name__ + "' and '"
           + type(output_model).__name__ + "'")
         return False

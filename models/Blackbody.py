@@ -12,7 +12,7 @@ from Model import Model
 
 class Blackbody(Model):
   def __init__(self, T=50, lambd=(8e-6, 14e-6), phi=(0,0), area=17e-6**2, omega=0.75):
-    super().__init__(input_tuple=None, output_tuple={"P"})
+    super().__init__(input_tuple=None, output_tuple={"P": (1,)})
     self.T     = T
     self.lambd_lower, self.lambd_upper = lambd
     self.phi_r, self.phi_s = phi

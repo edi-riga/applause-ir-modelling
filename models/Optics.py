@@ -11,7 +11,7 @@ from Model import Model
 
 class Optics(Model):
   def __init__(self, resolution=(320,240), focal_length=1.2, pitch=17e-6, visualize=False):
-    super().__init__(input_tuple={"P"}, output_tuple={"P_distribution"}, visualize=visualize)
+    super().__init__(input_tuple={"P": (1,)}, output_tuple={"P_distribution": resolution}, visualize=visualize)
     self.pixsize_h, self.pixsize_v = resolution
     self.focal_length = focal_length
     self.pitch = pitch

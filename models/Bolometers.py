@@ -42,8 +42,13 @@ class Bolometers(Model):
     self.size_total_v = self.size_active_v + self.size_boundary_t + self.size_boundary_b \
                       + self.size_blind_t + self.size_blind_b
 
-    super().__init__(input_tuple ={"P_distribution"},
-                     output_tuple={"R_ambient", "G_thermal", "C_thermal", "R0", "tau"},
+    super().__init__(input_tuple ={"P_distribution" : size_active},
+                     output_tuple={"P_total"   : (self.size_total_h, self.size_total_v),
+                                   "R_ambient" : (self.size_total_h, self.size_total_v),
+                                   "G_thermal" : (self.size_total_h, self.size_total_v),
+                                   "C_thermal" : (self.size_total_h, self.size_total_v),
+                                   "R0"        : (self.size_total_h, self.size_total_v),
+                                   "tau"       : (self.size_total_h, self.size_total_v)},
                      visualize=visualize)
 
     self.R_ambient_med = R_ambient_med
@@ -54,6 +59,7 @@ class Bolometers(Model):
     self.C_thermal_dev = C_thermal_dev
     self.T_ambient     = T_ambient
     self.E_activation  = -(TCR * k *self.T_ambient**2)
+    print(self.E_activation)
 
 
 
