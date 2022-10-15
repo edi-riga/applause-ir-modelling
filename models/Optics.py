@@ -10,7 +10,7 @@ from Model import Model
 
 
 class Optics(Model):
-  def __init__(self, resolution=(320,240), focal_length=1.2, pitch=17e-6, visualize=False):
+  def __init__(self, resolution=(320,240), focal_length=0.02, pitch=17e-6, visualize=False):
     super().__init__(input_tuple={"P": (1,)}, output_tuple={"P_distribution": resolution}, visualize=visualize)
     self.pixsize_h, self.pixsize_v = resolution
     self.focal_length = focal_length
@@ -39,12 +39,13 @@ class Optics(Model):
       row1 = int(row_half - 1 - r)
       row2 = int(row_half + r)
 
-      for co in col:
-        a = np.sqrt( (half_pitch + r * pitch) ** 2 + (half_pitch + co * pitch) ** 2 )
+      for c in col:
+        a = np.sqrt( (half_pitch + r * pitch) ** 2 + (half_pitch + c * pitch) ** 2 )
         b = np.sqrt(a ** 2 + fl ** 2)
         fact = (fl/b)**4
-        col1 = int(col_half + co)
-        col2 = int(col_half - 1 - co)
+        col1 = int(col_half + c)
+        col2 = int(col_half - 1 - c)
+
 
         #print(col1, col2)
 

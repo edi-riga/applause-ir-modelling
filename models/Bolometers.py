@@ -13,10 +13,10 @@ class Bolometers(Model):
   def __init__(self, Tcam=30, size_active=(320,240), size_boundary=(2,2,2,2),
                size_blind=(1,1,1,1), visualize=False,
                lambd=(8e-6, 14e-6), phi=(0,0), area=17e-6**2, omega=0.75,
-               R_ambient_med=1e6,  R_ambient_dev=1e-5,
-               G_thermal_med=1e-7, G_thermal_dev=1e-5,
-               C_thermal_med=5e-9, C_thermal_dev=1e-5,
-               T_ambient=300, TCR=-0.03):
+               R_ambient_med=1e6,  R_ambient_tol=1e-5,
+               G_thermal_med=1e-7, G_thermal_tol=1e-5,
+               C_thermal_med=5e-9, C_thermal_tol=1e-5,
+               T_ambient=300, TCR=-0.03, seed=123):
 
     self.Tcam            = Tcam
     self.size_active_h   = size_active[0]
@@ -52,16 +52,15 @@ class Bolometers(Model):
                      visualize=visualize)
 
     self.R_ambient_med = R_ambient_med
-    self.R_ambient_dev = R_ambient_dev
+    self.R_ambient_dev = R_ambient_med * R_ambient_tol
     self.G_thermal_med = G_thermal_med
-    self.G_thermal_dev = G_thermal_dev
+    self.G_thermal_dev = G_thermal_med * G_thermal_tol
     self.C_thermal_med = C_thermal_med
-    self.C_thermal_dev = C_thermal_dev
+    self.C_thermal_dev = C_thermal_med * C_thermal_tol
     self.T_ambient     = T_ambient
     self.E_activation  = -(TCR * k *self.T_ambient**2)
-    print(self.E_activation)
 
-
+    self.seed = seed
 
     # Model is parametirized using camera's temperatures, store it into arguments
     # for caching mechanism
@@ -87,12 +86,12 @@ class Bolometers(Model):
 
   def _get_physical_parameters(self):
     size = (self.size_total_v, self.size_total_h)
-    rng = np.random.default_rng(None)
+    rng = np.random.default_rng(self.seed)
     R_ambient = rng.normal(loc=self.R_ambient_med, scale=self.R_ambient_dev, size=size)
     G_thermal = rng.normal(loc=self.G_thermal_med, scale=self.G_thermal_dev, size=size)
     C_thermal = rng.normal(loc=self.C_thermal_med, scale=self.C_thermal_dev, size=size)
 
-    tau = np.zeros((self.size_total_v, self.size_total_h))
+    tau = C_thermal / G_thermal
     R0  = R_ambient / np.exp(self.E_activation/(k*self.T_ambient))
 
     return R_ambient, G_thermal, C_thermal, R0, tau

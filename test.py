@@ -9,13 +9,14 @@ from Model      import Model
 from Simulation import Simulation
 from Optics     import Optics
 from Bolometers import Bolometers
+from Readout    import Readout
 
 # models
 from Blackbody import Blackbody
 
 
 # General parameters
-T_black_body = 30
+T_black_body = 300
 angle_radiator_receiver_r = 0
 angle_radiator_receiver_s = 0
 FOV = np.pi/6
@@ -29,8 +30,8 @@ wavelength_upper = 14e-6
 bol_dim_h        = 17e-6
 bol_dim_v        = 17e-6
 bol_fill_factor  = 0.65
-resolution_h     = 320
-resolution_v     = 240
+resolution_h     = 640
+resolution_v     = 480
 size_h           = bol_dim_h*resolution_h
 size_v           = bol_dim_v*resolution_v
 focal_length     = size_h / ( 2 * np.arctan(FOV/2) )
@@ -58,11 +59,20 @@ bolometers = Bolometers(
   size_blind    = (1,1,1,1),
   visualize     = True)
 
-blackbody.set_args_list([30, 50])
+# Model - Readout
+readout = Readout(
+  size_active   = (resolution_h, resolution_v),
+  size_boundary = (2,2,2,2),
+  size_blind    = (1,1,1,1),
+  visualize     = True)
+
+
+blackbody.set_args_list([300])
 
 #sim = Simulation([blackbody], use_cache=True)
-#sim = Simulation([blackbody, optics], use_cache=True)
-sim = Simulation([blackbody, optics, bolometers], use_cache=True)
+#sim = Simulation([blackbody, optics])
+#sim = Simulation([blackbody, optics, bolometers, readout], use_cache=False)
+sim = Simulation([blackbody, optics, bolometers, readout], use_cache=True)
 output = sim.process()
 
 print(output)
