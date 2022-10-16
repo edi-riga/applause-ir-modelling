@@ -130,10 +130,6 @@ class Readout(Model):
 
     print("")
 
-    #print(V_int)
-    #print(V_int_skim)
-    #raise NotImplemented()
-
     '''Recalculate output voltage using theoretical temperature correction
     that utilizes analog (voltage-based) subtraction, calculate both
     vertical and horizontal bolometer correction effects'''
@@ -151,28 +147,7 @@ class Readout(Model):
         blind_average_int_h  = np.average([blind_int_l, blind_int_r])
         blind_average_skim_v = np.average([blind_skim_t, blind_skim_b])
         blind_average_skim_h = np.average([blind_skim_l, blind_skim_r])
-        #print("zero")
-        #print(blind_average_int_v)
-        #print(blind_average_skim_v)
-        #print(blind_average_int_h)
-        #print(blind_average_skim_h)
-        #print("blind_t: " + str(blind_t))
-        #print("blind_b: " + str(blind_b))
-        #print("blind_l: " + str(blind_l))
-        #print("blind_r: " + str(blind_r))
-        #print(blind_average_v)
-        #print(blind_average_h)
-        #print((self.R3 /(self.R2+self.R3)) * blind_average_v)
-        #print(V_bol[r+self.size_blind_t + self.size_boundary_t, c+self.size_blind_l + self.size_boundary_l])
-        #print((1/(self.R1*self.C)) * ((self.R3 /(self.R2+self.R3)) * blind_average_v - V_bol[r+self.size_blind_t + self.size_boundary_t, c+self.size_blind_l + self.size_boundary_l]))
-        #print((self.R3 /(self.R2+self.R3) * blind_average_v))
-        #print("first")
-        #print((1/(self.R1*self.C)) * ((self.R3 /(self.R2+self.R3)) * blind_average_int_v - V_int[r+self.size_blind_t + self.size_boundary_t, c+self.size_blind_l + self.size_boundary_l] ))
-        #print((1/(self.R1*self.C)))
-        #print((self.R3 /(self.R2+self.R3)) * blind_average_int_v)
-        #print(V_int[r+self.size_blind_t + self.size_boundary_t, c+self.size_blind_l + self.size_boundary_l] )
-        #print("second")
-        #print(self.R3 /(self.R2+self.R3) * blind_average_skim_v)
+
         V_bol[r + self.size_blind_t + self.size_boundary_t,
               c + self.size_blind_l + self.size_boundary_l] = \
                        (1/(self.R1*self.C)) \
