@@ -7,10 +7,39 @@ import sys
 sys.path.append('../backend')
 
 from Model import Model
-
+import params
 
 class Optics(Model):
-  def __init__(self, resolution=(320,240), focal_length=0.02, pitch=17e-6, visualize=False):
+  """
+  Models the IR power distribution across the image sensor.
+  
+  Input data
+  ----------
+  P :
+      IR power observed by the center pixel.
+  
+  Output data
+  -----------
+  P_distribution :
+      IR power distribution across the sensor.
+  
+  Model argument
+  --------------
+  None.
+  
+  Initializer parameters
+  ----------------------
+  resolution :
+      Resolution of the sensor's active area.
+  
+  focal_length :
+      Focal length.
+  
+  pitch :
+      Pitch between pixels.
+  """
+
+  def __init__(self, resolution=params.resolution, focal_length=params.focal_length, pitch=params.pitch, visualize=False):
     super().__init__(input_tuple={"P": (1,)}, output_tuple={"P_distribution": resolution}, visualize=visualize)
     self.pixsize_h, self.pixsize_v = resolution
     self.focal_length = focal_length

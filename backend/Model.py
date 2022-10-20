@@ -2,6 +2,23 @@
 import numpy as np
 
 class Model():
+  """
+  Base class for simulation models.
+
+  A model produces simulation data either by generating it or by
+  transforming input data. Each model may have a set of parameters
+  that are set during its instantiation and remain constant throughout
+  the simulation. In addition, a model may accept a list of arguments
+  that can be specified on each simulation run.
+  
+                         Argument(s)
+                              |
+                              v
+                      ----------------
+       Input data --> |     Model    | --> Output data
+                      | (Parameters) |
+                      ----------------
+  """
   def __init__(self, input_tuple=None, output_tuple=None, args_list=[None], visualize=False):
     self.input_tuple  = input_tuple
     self.output_tuple = output_tuple

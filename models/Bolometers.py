@@ -8,15 +8,104 @@ from scipy.constants import c, h, k, pi
 import sys
 sys.path.append('../backend')
 from Model import Model
+import params
 
 class Bolometers(Model):
-  def __init__(self, Tcam=30, size_active=(320,240), size_boundary=(2,2,2,2),
-               size_blind=(1,1,1,1), visualize=False,
-               lambd=(8e-6, 14e-6), phi=(0,0), area=17e-6**2, omega=0.75,
-               R_ambient_med=1e6,  R_ambient_tol=1e-5,
-               G_thermal_med=1e-7, G_thermal_tol=1e-5,
-               C_thermal_med=5e-9, C_thermal_tol=1e-5,
-               T_ambient=300, TCR=-0.03, seed=123):
+  """
+  Model of the microbolometer focal plane array with a random distribution
+  of physical parameters. Calculates the total incident IR power from both
+  the observed scene and camera body radiation.
+
+  Input data
+  ----------
+  P_distribution :
+      IR power distribution across the sensor's active area.
+  
+  Output data
+  -----------
+  P_total :
+      Total observed IR power (scene + camera body) across the
+      full sensor's area.
+  
+  R_ambient :
+      Microbolometer ambient temperature resistance distribution.
+  
+  G_thermal :
+      Microbolometer thermal conductance distribution.
+  
+  C_thermal :
+      Microbolomeer thermal capacity distribution.
+  
+  R0 :
+      
+
+  tau :
+      Microbolometer thermal time constant distribution.
+
+  Model argument
+  --------------
+  Camera body temperature in Kelvin.
+
+  Initializer parameters
+  ----------------------
+  Tcam :
+      Camera body temperature in Kelvin.
+  
+  size_active :
+      Resolution of the sensor's active area.
+  
+  size_boundary :
+      Number of boundary pixels at each side.
+  
+  size_blind :
+      Number of blind pixels at each side.
+  
+  lambd :
+      Upper and lower bounds of the wavelength area of interest.
+  
+  phi :
+      Angle of incidence.
+  
+  area :
+      Sensitive area of a receiver's pixel.
+  
+  omega :
+      Projected solid angle.
+  
+  R_ambient_med :
+      Microbolometer median resistance at ambient temperature.
+  
+  R_ambient_tol :
+      Microbolometer resistance tolerance at ambient temperature.
+  
+  G_thermal_med :
+      Microbolometer median thermal conductivity.
+  
+  G_thermal_tol :
+      Microbolometer thermal conductivity tolerance.
+  
+  C_thermal_med :
+      Microbolometer median thermal capacity.
+  
+  C_thermal_tol :
+      Microbolometer thermal capacity tolerance.
+  
+  T_ambient :
+      Ambient temperature in Kelvin.
+  
+  TCR :
+      Microbolometer thermal coefficient of resistance.
+  
+  seed :
+      Random number generator seed.
+  """
+  def __init__(self, Tcam=params.Tcam, size_active=params.resolution, size_boundary=params.size_boundary,
+               size_blind=params.size_blind, visualize=False,
+               lambd=params.lambd, phi=params.phi, area=params.area, omega=params.omega,
+               R_ambient_med=params.R_ambient_med, R_ambient_tol=params.R_ambient_tol,
+               G_thermal_med=params.G_thermal_med, G_thermal_tol=params.G_thermal_tol,
+               C_thermal_med=params.C_thermal_med, C_thermal_tol=params.C_thermal_tol,
+               T_ambient=params.T_ambient, TCR=params.TCR, seed=123):
 
     self.Tcam            = Tcam
     self.size_active_h   = size_active[0]

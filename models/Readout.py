@@ -10,11 +10,76 @@ from scipy.constants import c, h, k, pi
 import sys
 sys.path.append('../backend')
 from Model import Model
+import params
 
 class Readout(Model):
-  def __init__(self, size_active=(320,240), size_boundary=(2,2,2,2), size_blind=(1,1,1,1),
-               I_bias=50e-6, E_act=3.7277523e-20, T_amb=300, t_int=10e-3,
-               V_max=3.2,
+  """
+  Model of a readout circuit. Calculates the measured microbolometer
+  voltage levels. Three different outputs are produced, two of which
+  partially compensate the nonuniformity using a skimming row or column,
+  the third output does not perform any additional compensation.
+  
+  Input data
+  -----------
+  P_total :
+      Total observed IR power (scene + camera body) across the
+      full sensor's area.
+  
+  R_ambient :
+      Microbolometer ambient temperature resistance distribution.
+  
+  G_thermal :
+      Microbolometer thermal conductance distribution.
+  
+  C_thermal :
+      Microbolomeer thermal capacity distribution.
+  
+  R0 :
+      
+  
+  tau :
+      Microbolometer thermal time constant distribution.
+  
+  Output data
+  -----------
+  V_bol :
+      Raw microbolometer voltages.
+  
+  V_bol_h :
+      Microbolometer voltages with horizontal skimming.
+  
+  V_bol_v :
+      Microbolometer voltages with vertical skimming.
+
+  Initializer parameters
+  ----------------------
+  size_active :
+      Resolution of the sensor's active area.
+  
+  size_boundary :
+      Number of boundary pixels on each side.
+  
+  size_blind :
+      Number of blind pixels on each side.
+  
+  I_bias :
+      Microbolometer bias current.
+  
+  E_act :
+      Microbolometer activation energy.
+  
+  T_amb :
+      Ambient temperature.
+  
+  t_int :
+      ADC integration time.
+  
+  V_max :
+      ADC maximum output voltage.
+  """
+  def __init__(self, size_active=params.resolution, size_boundary=params.size_boundary, size_blind=params.size_blind,
+               I_bias=params.I_bias, E_act=params.E_act, T_amb=params.T_ambient, t_int=params.t_int,
+               V_max=params.V_max,
                visualize=False):
 
     self.size_active_h   = size_active[0]
@@ -47,7 +112,12 @@ class Readout(Model):
         "C_thermal" : (self.size_total_h, self.size_total_v),
         "R0"        : (self.size_total_h, self.size_total_v),
         "tau"       : (self.size_total_h, self.size_total_v)},
-      output_tuple = {"DAC": (self.size_active_h, self.size_active_v)},
+      # output_tuple = {"DAC": (self.size_active_h, self.size_active_v)},
+      output_tuple = {
+        "V_bol"     : (self.size_total_h, self.size_total_v),
+        "V_bol_h"   : (self.size_total_h, self.size_total_v),
+        "V_bol_v"   : (self.size_total_h, self.size_total_v),
+      },
       visualize=visualize)
 
     self.mask_active   = np.zeros((self.size_total_v, self.size_total_h)).astype(bool)
@@ -68,11 +138,11 @@ class Readout(Model):
     self.mask_boundary = np.logical_not(np.logical_or(self.mask_active,self.mask_blind))
 
     # RESISTORS ON OP AMP INPUTS (Very model-specific)
-    self.R1 = 200e6
-    self.R2 = 10e3
-    self.R3 = 400e6
+    self.R1 = params.R1
+    self.R2 = params.R2
+    self.R3 = params.R3
     # GAIN CAPACITOR OF INTEGRATOR
-    self.C  = 4e-13
+    self.C  = params.C
 
 
 

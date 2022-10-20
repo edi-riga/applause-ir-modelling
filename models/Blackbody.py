@@ -8,10 +8,47 @@ import sys
 sys.path.append('../backend')
 
 from Model import Model
-
+import params
 
 class Blackbody(Model):
-  def __init__(self, T=50, lambd=(8e-6, 14e-6), phi=(0,0), area=17e-6**2, omega=0.75):
+  """
+  Models IR camera sensor observing a black body radiator. Given the
+  temperature or temperature range of the black body, calculates the
+  IR power incident on a single pixel in the center of the imager's
+  focal plane.
+  
+  Input data
+  ----------
+  None.
+  
+  Output data
+  -----------
+  P :
+      IR power observed by the center pixel
+
+  Model argument
+  --------------
+      Black body temperature in Kelvin.
+   
+  Initializer parameters
+  ----------------------
+  T :
+      Black body temperature in Kelvin.
+  
+  lambd :
+      Lower and upper bounds of the wavelength range of interest.
+  
+  phi :
+      Angle of incidence.
+  
+  area :
+      Sensitive area of a receiver's pixel.
+  
+  omega :
+      Projected solid angle.
+  """
+  
+  def __init__(self, T=params.T, lambd=params.lambd, phi=params.phi, area=params.area, omega=params.omega):
     super().__init__(input_tuple=None, output_tuple={"P": (1,)})
     self.T     = T
     self.lambd_lower, self.lambd_upper = lambd

@@ -4,8 +4,31 @@ import numpy as np
 from Model import Model
 
 class Simulation():
-  ''' TODO '''
+  """
+  A simulation consists of several models, each representing different parts
+  of the system.
+  
+  Constructor accepts a list of model instances to be used in the simulation.
+  The first model in the list should generate the initial simulation data,
+  which then gets passed to consecutive models. Each model can be supplied
+  with an optional argument value or a list of values. Since each of the
+  argument values is likely to produce a different output, this splits the
+  simulation into separate branches. The number of results at the end of the
+  simulation is thus equal to the product of argument numbers of each model.
 
+              arg1         [arg21, arg22]      [arg31, arg32]
+               |                 |                   |
+               |                 |                   v
+               |                 |             --------------
+               v                 v          -> |   Model 3  | -->
+        --------------     --------------  /   | (Params 3) | -->
+        |   Model 1  | --> |   Model 2  | -    --------------
+        | (Params 1) |     | (Params 2) | -          v             . . .
+        --------------     --------------  \   --------------
+                                            -> |   Model 3  | -->
+                                               | (Params 3) | -->
+                                               --------------
+  """
   def __init__(self, models, use_cache=True, cachedir='cache', displaydir='display'):
     self.models     = models
     self.use_cache  = use_cache
