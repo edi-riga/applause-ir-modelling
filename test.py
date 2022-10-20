@@ -10,23 +10,20 @@ from Simulation import Simulation
 from Optics     import Optics
 from Bolometers import Bolometers
 from Readout    import Readout
+from ADC        import ADC
+from NUC        import NUC
 
 # models
 from Blackbody import Blackbody
 
 
 # General parameters
-T_black_body = 300
-angle_radiator_receiver_r = 0
-angle_radiator_receiver_s = 0
 FOV = np.pi/6
 
 # TODO: check correctness
 angle_projected_solid = np.pi * (np.sin(FOV/2)) ** 2
 
 # Sensor parameters
-wavelength_lower = 8e-6
-wavelength_upper = 14e-6
 bol_dim_h        = 17e-6
 bol_dim_v        = 17e-6
 bol_fill_factor  = 0.65
@@ -39,9 +36,6 @@ focal_length     = size_h / ( 2 * np.arctan(FOV/2) )
 
 # Model - Black body
 blackbody = Blackbody(
-  T     = T_black_body,
-  lambd = (wavelength_lower, wavelength_upper),
-  phi   = (angle_radiator_receiver_r, angle_radiator_receiver_s),
   area  = bol_dim_h * bol_dim_v * bol_fill_factor,
   omega = np.pi * (np.sin(FOV/2)) ** 2)
 
@@ -52,27 +46,46 @@ optics = Optics(
   pitch        = bol_dim_h,
   visualize    = True)
 
-# Model - Molometers
+# Model - Bolometers
 bolometers = Bolometers(
   size_active   = (resolution_h, resolution_v),
-  size_boundary = (2,2,2,2),
-  size_blind    = (1,1,1,1),
   visualize     = True)
 
 # Model - Readout
 readout = Readout(
   size_active   = (resolution_h, resolution_v),
-  size_boundary = (2,2,2,2),
-  size_blind    = (1,1,1,1),
   visualize     = True)
 
+# Model - ADC 
+adc = ADC(
+  size_active   = (resolution_h, resolution_v),
+  skim          = 'h')
 
-blackbody.set_args_list([300])
 
-#sim = Simulation([blackbody], use_cache=True)
-#sim = Simulation([blackbody, optics])
-#sim = Simulation([blackbody, optics, bolometers, readout], use_cache=False)
-sim = Simulation([blackbody, optics, bolometers, readout], use_cache=True)
+# Calculate NUC coefficients
+temps = [300, 400]
+blackbody.set_args_list(temps)
+
+sim_nuc_coef = Simulation([blackbody, optics, bolometers, readout, adc], use_cache=True)
+output_nuc_coef = sim_nuc_coef.process()
+
+frame0 = output_nuc_coef[0][0][0][0][0]['ADC']
+frame1 = output_nuc_coef[1][0][0][0][0]['ADC']
+
+nuc_a, nuc_b = NUC.calculate_coefs([frame0, frame1], [np.mean(frame0), np.mean(frame1)])
+
+nuc = NUC(
+  coef_a = nuc_a,
+  coef_b = nuc_b,
+  resolution = (resolution_h, resolution_v),
+  visualize = True
+)
+
+# Run silumation with NUC
+blackbody.set_args_list([t for t in range(300, 400, 10)])
+
+sim = Simulation([blackbody, optics, bolometers, readout, adc, nuc], use_cache=True)
 output = sim.process()
+
 
 print(output)
