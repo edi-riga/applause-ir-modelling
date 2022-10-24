@@ -32,13 +32,26 @@ class Model():
   def process(self, input_data=None, args=None):
     raise NotImplementedError()
 
-  # To be implemented by the derived class
   def store(self, prefix, args, input_data, output_data):
-    raise NotImplementedError()
-
-  # To be implemented by the derived class
+    for key in output_data:
+      if self.output_tuple[key] == (1,):
+        with open(f'{prefix}_{str(args)}_{key}', 'w') as f:
+          f.write(str(output_data[key]))
+      else:
+        np.savetxt(f'{prefix}_{str(args)}_{key}', output_data[key])
+  
   def load(self, prefix, args, input_data):
-    raise NotImplementedError()
+    data = {}
+    try:
+      for key, value in self.output_tuple.items():
+        if value == (1,):
+          with open(f'{prefix}_{str(args)}_{key}', 'r') as f:
+            data[key] = float(f.read())
+        else:
+          data[key] = np.loadtxt(f'{prefix}_{str(args)}_{key}')
+      return data
+    except:
+      return None
 
   # To be implemented by the derived class
   def store_display(self, prefix, args, input_data, output_data, cached):

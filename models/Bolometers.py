@@ -218,24 +218,7 @@ class Bolometers(Model):
       "C_thermal" : C_thermal,
       "R0"        : R0,
       "tau"       : tau}
-
-  def store(self, prefix, args, input_data, output_data):
-    # TODO: add hashsum check
-    for key in output_data:
-      np.savetxt(prefix + key, output_data[key])
-
-  def load(self, prefix, args, input_data):
-    try:
-      return {
-        "P_total"   : np.loadtxt(prefix + "P_total.txt"),
-        "R_ambient" : np.loadtxt(prefix + "R_ambient.txt"),
-        "G_thermal" : np.loadtxt(prefix + "G_thermal.txt"),
-        "C_thermal" : np.loadtxt(prefix + "C_thermal.txt"),
-        "R0"        : np.loadtxt(prefix + "R0.txt"),
-        "tau"       : np.loadtxt(prefix + "tau.txt")}
-    except:
-      return None
-
+  
   def store_display(self, prefix, args, input_data, output_data, cached):
     fname = prefix + '.png'
     if not os.path.exists(fname) or not cached:

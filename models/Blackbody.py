@@ -80,22 +80,6 @@ class Blackbody(Model):
     P = L*np.cos(self.phi_s)*self.area*np.cos(self.phi_r)*self.omega
     return {"P":P}
 
-
-  def store(self, prefix, args, input_data, output_data):
-    with open(prefix + str(args) + '.csv', 'w') as file:
-      csvwriter = csv.writer(file)
-      csvwriter.writerow('Power')
-      csvwriter.writerow([output_data["P"]])
-
-  def load(self, prefix, args, input_data):
-    try:
-      with open(prefix + str(args) + '.csv', 'r') as file:
-        csvreader = csv.reader(file)
-        header = next(csvreader)
-        data   = next(csvreader)
-        return {"P": float(data[0])}
-    except:
-      return None
-
   def get_parameter_id_str(self, args, input_data):
     return str(args)
+

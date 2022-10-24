@@ -98,19 +98,6 @@ class NUC(Model):
   def get_parameter_id_str(self, args, input_data):
     return str(args)
   
-  def store(self, prefix, args, input_data, output_data):
-    # TODO: add hashsum check
-    fname = prefix + "ADC" + '.txt'
-    np.savetxt(fname, output_data["ADC"])
-
-  def load(self, prefix, args, input_data):
-    # TODO: add hashsum check
-    try:
-      fname = prefix + str(input_data["ADC"]) + '.txt'
-      return {"ADC":np.loadtxt(fname)}
-    except:
-      return None
-  
   def store_display(self, prefix, args, input_data, output_data, cached):
     for key in output_data:
       fname = prefix + key + '.png'

@@ -261,25 +261,7 @@ class Readout(Model):
       "V_bol"   : V_bol,
       "V_bol_h" : V_bol_h,
       "V_bol_v" : V_bol_v}
-
-
-  def store(self, prefix, args, input_data, output_data):
-    # TODO: add hashsum check\
-    for key in output_data:
-      print("Storing:" + key)
-      np.savetxt(prefix + key, output_data[key])
-
-  def load(self, prefix, args, input_data):
-    #print(prefix + "V_bol")
-    #print(prefix + "V_bol_h")
-    #print(prefix + "V_bol_v")
-    try:
-      return {"V_bol"   : np.loadtxt(prefix + "V_bol"),
-              "V_bol_h" : np.loadtxt(prefix + "V_bol_h"),
-              "V_bol_v" : np.loadtxt(prefix + "V_bol_v")}
-    except:
-      return None
-
+  
   def store_display(self, prefix, args, input_data, output_data, cached):
     for key in output_data:
       fname = prefix + key + '.png'

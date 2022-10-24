@@ -96,21 +96,7 @@ class Optics(Model):
       for co in col_pd:
         pow_distrib[r][co] = distrib_fact[r][co]*P
     return {"P_distribution": pow_distrib}
-
-
-  def store(self, prefix, args, input_data, output_data):
-    # TODO: add hashsum check
-    fname = prefix + str(input_data["P"]) + '.txt'
-    np.savetxt(fname, output_data["P_distribution"])
-
-  def load(self, prefix, args, input_data):
-    # TODO: add hashsum check
-    try:
-      fname = prefix + str(input_data["P"]) + '.txt'
-      return {"P_distribution":np.loadtxt(fname)}
-    except:
-      return None
-
+  
   def store_display(self, prefix, args, input_data, output_data, cached):
     fname = prefix + str(input_data["P"]) + '.png'
     if not os.path.exists(fname) or not cached:
